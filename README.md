@@ -1,4 +1,4 @@
-# mp-ums (User Management System)
+# Spring Auth
 
 ![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=java)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5.0-brightgreen?style=flat-square&logo=spring-boot)
