@@ -31,14 +31,22 @@ public class PermissionController {
 
     @GetMapping
     @PreAuthorize("hasPermission(null, 'PERMISSION:READ') or hasRole('ADMIN')")
-    public ResponseEntity<?> getAllPermissions() {
+    public ResponseEntity<?> getAllPermissions(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "createdAt,desc") String sort) {
         try {
-            log.info("Getting all permissions");
-            List<Permission> permissions = permissionService.getAllPermissions();
-            // log.info("Found {} permissions", permissions.size());
-            return ResponseEntity.ok(permissions);
+            String[] sortParams = sort.split(",");
+            org.springframework.data.domain.Sort sortObj = org.springframework.data.domain.Sort.by(
+                sortParams.length > 1 && "asc".equalsIgnoreCase(sortParams[1])
+                    ? org.springframework.data.domain.Sort.Direction.ASC
+                    : org.springframework.data.domain.Sort.Direction.DESC,
+                sortParams[0]
+            );
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sortObj);
+            return ResponseEntity.ok(permissionService.getAllPermissions(pageable));
         } catch (Exception e) {
-            // log.error("Error retrieving permissions: {}", e.getMessage(), e);
+            log.error("Error retrieving permissions: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body("Error retrieving permissions");
         }
     }

@@ -50,20 +50,23 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
-    public ResponseEntity<?> getAllUsers() {
+    public ResponseEntity<?> getAllUsers(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "createdAt,desc") String sort) {
         try {
-            log.debug("Fetching all users from database");
-            List<User> users = userService.getAllUsers();
-            
-            if (users.isEmpty()) {
-                log.info("No users found in the system");
-                return ResponseEntity.ok().body("No users found");
-            }
-            
-            List<com.mp.core.dto.UserResponseDTO> dtos = users.stream()
-                .map(UserMapper::toUserResponseDTO)
-                .collect(java.util.stream.Collectors.toList());
-            return ResponseEntity.ok(dtos);
+            String[] sortParams = sort.split(",");
+            org.springframework.data.domain.Sort sortObj = org.springframework.data.domain.Sort.by(
+                sortParams.length > 1 && "asc".equalsIgnoreCase(sortParams[1])
+                    ? org.springframework.data.domain.Sort.Direction.ASC
+                    : org.springframework.data.domain.Sort.Direction.DESC,
+                sortParams[0]
+            );
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sortObj);
+            org.springframework.data.domain.Page<User> userPage = userService.getAllUsers(pageable);
+
+            org.springframework.data.domain.Page<com.mp.core.dto.UserResponseDTO> dtoPage = userPage.map(UserMapper::toUserResponseDTO);
+            return ResponseEntity.ok(dtoPage);
         } catch (Exception e) {
             log.error("Failed to fetch users", e);
             return ResponseEntity.internalServerError()

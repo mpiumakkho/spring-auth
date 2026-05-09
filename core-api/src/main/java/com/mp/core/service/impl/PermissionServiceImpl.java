@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -155,6 +157,12 @@ public class PermissionServiceImpl implements PermissionService {
     @Transactional(readOnly = true)
     public List<Permission> getAllPermissions() {
         return permRepo.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Permission> getAllPermissions(Pageable pageable) {
+        return permRepo.findAll(pageable);
     }
 
     @Override

@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -124,6 +126,12 @@ public class RoleServiceImpl implements RoleService {
     @Transactional(readOnly = true)
     public List<Role> getAllRoles() {
         return roleRepo.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Role> getAllRoles(Pageable pageable) {
+        return roleRepo.findAll(pageable);
     }
 
     @Override

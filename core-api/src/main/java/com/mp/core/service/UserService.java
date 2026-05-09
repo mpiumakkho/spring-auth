@@ -3,6 +3,9 @@ package com.mp.core.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.mp.core.entity.User;
 
 public interface UserService {
@@ -12,6 +15,7 @@ public interface UserService {
     Optional<User> getUserById(String id);
     Optional<User> getUserByUsername(String username);
     List<User> getAllUsers();
+    Page<User> getAllUsers(Pageable pageable);
     void assignRoleToUser(String userId, String roleId);
     void removeRoleFromUser(String userId, String roleId);
     User updateUserStatus(String userId, String status);

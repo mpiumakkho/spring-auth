@@ -32,12 +32,20 @@ public class RoleController {
 
     @GetMapping
     @PreAuthorize("hasPermission(null, 'ROLE:READ') or hasRole('ADMIN')")
-    public ResponseEntity<?> getAllRoles() {
+    public ResponseEntity<?> getAllRoles(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "createdAt,desc") String sort) {
         try {
-            log.info("Getting all roles");
-            List<Role> roles = roleService.getAllRoles();
-            log.info("Found {} roles", roles.size());
-            return ResponseEntity.ok(roles);
+            String[] sortParams = sort.split(",");
+            org.springframework.data.domain.Sort sortObj = org.springframework.data.domain.Sort.by(
+                sortParams.length > 1 && "asc".equalsIgnoreCase(sortParams[1])
+                    ? org.springframework.data.domain.Sort.Direction.ASC
+                    : org.springframework.data.domain.Sort.Direction.DESC,
+                sortParams[0]
+            );
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sortObj);
+            return ResponseEntity.ok(roleService.getAllRoles(pageable));
         } catch (Exception e) {
             log.error("Error retrieving roles: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body("Error retrieving roles");
