@@ -2,88 +2,50 @@ package com.mp.core.controller;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.json.JSONObject;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mp.core.dto.TokenRequestDTO;
 import com.mp.core.service.UserSessionService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/sessions")
 @Slf4j
-public class SessionController {    private final UserSessionService sessionService;
-    
+public class SessionController {
+
+    private final UserSessionService sessionService;
+
     public SessionController(UserSessionService sessionService) {
         this.sessionService = sessionService;
     }
-    
+
     @PostMapping("/validate")
-    public ResponseEntity<?> validateSession(@RequestBody String request) {
-        try {
-            JSONObject json = new JSONObject(request);
-            String token = json.optString("token");
-            
-            if (token == null || token.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Token required");
-            }
-            
-            boolean isValid = sessionService.isSessionValid(token);
-            if (isValid) {
-                // Update last activity time
-                sessionService.updateActivity(token);
-                return ResponseEntity.ok().build();
-            } else {
-                return ResponseEntity.status(401).body("Session expired");
-            }
-            
-        } catch (Exception e) {
-            log.error("Error validating session", e);
-            return ResponseEntity.internalServerError().body("Error validating session");
-        }
-    }
-    
-    @PostMapping("/keep-alive")
-    public ResponseEntity<?> keepAlive(@RequestBody String request) {
-        try {
-            JSONObject json = new JSONObject(request);
-            String token = json.optString("token");
-            
-            if (token == null || token.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Token required");
-            }
-            
-            if (sessionService.isSessionValid(token)) {
-                sessionService.updateActivity(token);
-                return ResponseEntity.ok().build();
-            } else {
-                return ResponseEntity.status(401).body("Session expired");
-            }
-            
-        } catch (Exception e) {
-            log.error("Error updating session activity", e);
-            return ResponseEntity.internalServerError().body("Error updating session activity");
-        }
-    }
-    
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestBody String request) {
-        try {
-            JSONObject json = new JSONObject(request);
-            String token = json.optString("token");
-            
-            if (token == null || token.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Token required");
-            }
-            
-            sessionService.invalidateSession(token);
+    public ResponseEntity<Void> validateSession(@Valid @RequestBody TokenRequestDTO request) {
+        if (sessionService.isSessionValid(request.token())) {
+            sessionService.updateActivity(request.token());
             return ResponseEntity.ok().build();
-            
-        } catch (Exception e) {
-            log.error("Error logging out", e);
-            return ResponseEntity.internalServerError().body("Error logging out");
         }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-} 
+
+    @PostMapping("/keep-alive")
+    public ResponseEntity<Void> keepAlive(@Valid @RequestBody TokenRequestDTO request) {
+        if (sessionService.isSessionValid(request.token())) {
+            sessionService.updateActivity(request.token());
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody TokenRequestDTO request) {
+        sessionService.invalidateSession(request.token());
+        return ResponseEntity.ok().build();
+    }
+}

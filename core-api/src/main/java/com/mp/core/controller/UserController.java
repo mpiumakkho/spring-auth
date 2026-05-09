@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,13 +21,23 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mp.core.dto.AssignRoleRequestDTO;
+import com.mp.core.dto.FindUserRequestDTO;
+import com.mp.core.dto.LoginRequestDTO;
+import com.mp.core.dto.StatusFilterRequestDTO;
+import com.mp.core.dto.UpdateUserStatusRequestDTO;
+import com.mp.core.dto.UserIdRequestDTO;
 import com.mp.core.dto.UserMapper;
-import com.mp.core.dto.UserRequestDTO;
+import com.mp.core.dto.UserResponseDTO;
+import com.mp.core.dto.UsernameRequestDTO;
 import com.mp.core.entity.Role;
 import com.mp.core.entity.User;
 import com.mp.core.entity.UserSession;
+import com.mp.core.exception.BusinessValidationException;
+import com.mp.core.exception.ResourceNotFoundException;
 import com.mp.core.service.UserService;
 import com.mp.core.service.UserSessionService;
 import com.mp.core.util.RoleEncryptor;
@@ -38,514 +51,250 @@ public class UserController {
     private final UserService userService;
     private final PasswordEncoder pwdEncoder;
     private final UserSessionService sessionService;
+    private final RoleEncryptor roleEncryptor;
 
-    @Autowired
-    private RoleEncryptor roleEncryptor;
-
-    public UserController(UserService userService, PasswordEncoder pwdEncoder, UserSessionService sessionService) {
+    public UserController(
+            UserService userService,
+            PasswordEncoder pwdEncoder,
+            UserSessionService sessionService,
+            RoleEncryptor roleEncryptor) {
         this.userService = userService;
         this.pwdEncoder = pwdEncoder;
         this.sessionService = sessionService;
+        this.roleEncryptor = roleEncryptor;
     }
 
     @GetMapping
     @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
-    public ResponseEntity<?> getAllUsers(
-            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
-            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size,
-            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "createdAt,desc") String sort) {
-        try {
-            String[] sortParams = sort.split(",");
-            org.springframework.data.domain.Sort sortObj = org.springframework.data.domain.Sort.by(
-                sortParams.length > 1 && "asc".equalsIgnoreCase(sortParams[1])
-                    ? org.springframework.data.domain.Sort.Direction.ASC
-                    : org.springframework.data.domain.Sort.Direction.DESC,
-                sortParams[0]
-            );
-            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sortObj);
-            org.springframework.data.domain.Page<User> userPage = userService.getAllUsers(pageable);
-
-            org.springframework.data.domain.Page<com.mp.core.dto.UserResponseDTO> dtoPage = userPage.map(UserMapper::toUserResponseDTO);
-            return ResponseEntity.ok(dtoPage);
-        } catch (Exception e) {
-            log.error("Failed to fetch users", e);
-            return ResponseEntity.internalServerError()
-                .body("Something went wrong while fetching users");
-        }
+    public ResponseEntity<Page<UserResponseDTO>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort) {
+        Pageable pageable = PageRequest.of(page, size, parseSort(sort));
+        Page<UserResponseDTO> dtoPage = userService.getAllUsers(pageable).map(UserMapper::toUserResponseDTO);
+        return ResponseEntity.ok(dtoPage);
     }
 
-    @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
     @PostMapping("/find-by-id")
-    public ResponseEntity<?> getUserById(@RequestBody String request) {
-        try {
-            JSONObject json = new JSONObject(request);
-            String userId = json.optString("userId");
-            
-            if (userId == null || userId.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("User ID required");
-            }
-
-            Optional<User> user = userService.getUserById(userId);
-            if (user.isPresent()) {
-                return ResponseEntity.ok(UserMapper.toUserResponseDTO(user.get()));
-            } else {
-                return ResponseEntity.status(404).body("User not found with ID: " + userId);
-            }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error finding user: " + e.getMessage());
-        }
+    @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
+    public ResponseEntity<UserResponseDTO> getUserById(@Valid @RequestBody UserIdRequestDTO request) {
+        User user = userService.getUserById(request.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", request.userId()));
+        return ResponseEntity.ok(UserMapper.toUserResponseDTO(user));
     }
 
-    @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
     @PostMapping("/find-by-username")
-    public ResponseEntity<?> getUserByUsername(@RequestBody String request) {
-        try {
-            JSONObject json = new JSONObject(request);
-            String username = json.optString("username");
-            
-            if (username == null || username.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Username required");
-            }
-
-            Optional<User> user = userService.getUserByUsername(username);
-            if (user.isPresent()) {
-                return ResponseEntity.ok(UserMapper.toUserResponseDTO(user.get()));
-            } else {
-                return ResponseEntity.status(404).body("User not found with username: " + username);
-            }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error finding user by username: " + e.getMessage());
-        }
+    @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
+    public ResponseEntity<UserResponseDTO> getUserByUsername(@Valid @RequestBody UsernameRequestDTO request) {
+        User user = userService.getUserByUsername(request.username())
+                .orElseThrow(() -> new ResourceNotFoundException("User with username '" + request.username() + "' not found"));
+        return ResponseEntity.ok(UserMapper.toUserResponseDTO(user));
     }
 
-    @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
     @PostMapping("/find-by-username-or-email")
-    public ResponseEntity<?> getUserByUsernameOrEmail(@RequestBody String request) {
-        try {
-            JSONObject json = new JSONObject(request);
-            String usernameOrEmail = json.optString("username");
-            if (usernameOrEmail == null || usernameOrEmail.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Username or email required");
-            }
-            Optional<User> user = userService.getUserByUsername(usernameOrEmail);
-            if (!user.isPresent()) {
-                user = userService.getUserByEmail(usernameOrEmail);
-            }
-            if (user.isPresent()) {
-                User u = user.get();
-                JSONObject userJson = new JSONObject();
-                userJson.put("userId", u.getUserId());
-                userJson.put("username", u.getUsername());
-                userJson.put("email", u.getEmail());
-                userJson.put("firstName", u.getFirstName());
-                userJson.put("lastName", u.getLastName());
-                userJson.put("status", u.getStatus());
-                List<String> roleNames = new ArrayList<>();
-                if (u.getRoles() != null) {
-                    u.getRoles().forEach(role -> roleNames.add(role.getName()));
-                }
-                userJson.put("roles", roleNames);
-                JSONObject result = new JSONObject();
-                result.put("success", true);
-                result.put("user", userJson);
-                return ResponseEntity.ok(result.toString());
-            } else {
-                JSONObject fail = new JSONObject();
-                fail.put("success", false);
-                fail.put("message", "User not found with username or email: " + usernameOrEmail);
-                return ResponseEntity.status(404).body(fail.toString());
-            }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error finding user by username or email: " + e.getMessage());
+    @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
+    public ResponseEntity<String> getUserByUsernameOrEmail(@Valid @RequestBody UsernameRequestDTO request) {
+        String identifier = request.username();
+        Optional<User> userOpt = userService.getUserByUsername(identifier)
+                .or(() -> userService.getUserByEmail(identifier));
+
+        if (userOpt.isEmpty()) {
+            JSONObject fail = new JSONObject();
+            fail.put("success", false);
+            fail.put("message", "User not found with username or email: " + identifier);
+            return ResponseEntity.status(404).body(fail.toString());
         }
+
+        User u = userOpt.get();
+        JSONObject userJson = new JSONObject();
+        userJson.put("userId", u.getUserId());
+        userJson.put("username", u.getUsername());
+        userJson.put("email", u.getEmail());
+        userJson.put("firstName", u.getFirstName());
+        userJson.put("lastName", u.getLastName());
+        userJson.put("status", u.getStatus());
+        List<String> roleNames = new ArrayList<>();
+        if (u.getRoles() != null) {
+            u.getRoles().forEach(role -> roleNames.add(role.getName()));
+        }
+        userJson.put("roles", roleNames);
+
+        JSONObject result = new JSONObject();
+        result.put("success", true);
+        result.put("user", userJson);
+        return ResponseEntity.ok(result.toString());
     }
 
     @PostMapping("/create")
     @PreAuthorize("hasPermission(null, 'USER:CREATE') or hasRole('ADMIN')")
-    public ResponseEntity<?> createUser(@Valid @RequestBody User newUser) {
-        if (newUser == null) {
-            return ResponseEntity.badRequest().body("Invalid user data");
-        }
-
-        String username = newUser.getUsername();
-        String email = newUser.getEmail();
-
-        if (username == null || username.isBlank()) {
-            log.warn("Attempt to create user with empty username");
-            return ResponseEntity.badRequest().body("Username cannot be empty");
-        }
-
-        if (email == null || !email.contains("@")) {
-            log.warn("Invalid email format: {}", email);
-            return ResponseEntity.badRequest().body("Please provide a valid email");
-        }
-
-        try {
-            log.info("Creating new user: {}", username);
-            User user = userService.createUser(newUser);
-            log.debug("User created successfully with ID: {}", user.getUserId());
-            return ResponseEntity.ok(user);
-        } catch (IllegalArgumentException e) {
-            log.warn("User creation failed for {}: {}", username, e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (RuntimeException e) {
-            log.error("Unexpected error while creating user: " + username, e);
-            return ResponseEntity.internalServerError()
-                .body("Unable to create user at this time");
-        }
+    public ResponseEntity<User> createUser(@Valid @RequestBody User newUser) {
+        log.info("Creating new user: {}", newUser.getUsername());
+        User user = userService.createUser(newUser);
+        log.debug("User created successfully with ID: {}", user.getUserId());
+        return ResponseEntity.ok(user);
     }
 
     @PutMapping("/update")
     @PreAuthorize("hasPermission(null, 'USER:UPDATE') or hasRole('ADMIN')")
-    public ResponseEntity<?> updateUser(@RequestBody User user) {
-        String userId = user.getUserId();
-        
-        if (userId == null || userId.isBlank()) {
-            log.warn("Update attempted without user ID");
-            return ResponseEntity.badRequest().body("Missing user ID");
+    public ResponseEntity<User> updateUser(@RequestBody User user) {
+        if (user.getUserId() == null || user.getUserId().isBlank()) {
+            throw new BusinessValidationException("User ID is required");
         }
-
-        try {
-            if (!userService.getUserById(userId).isPresent()) {
-                log.info("Update attempted for non-existent user: {}", userId);
-                return ResponseEntity.notFound().build();
-            }
-
-            User updated = userService.updateUser(user);
-            log.info("User {} updated successfully", userId);
-            return ResponseEntity.ok(updated);
-            
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid data for user update: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-            
-        } catch (Exception e) {
-            log.error("Failed to update user " + userId, e);
-            return ResponseEntity.internalServerError()
-                .body("Update failed - please try again later");
-        }
+        User updated = userService.updateUser(user);
+        log.info("User {} updated successfully", user.getUserId());
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasPermission(null, 'USER:DELETE') or hasRole('ADMIN')")
-    public ResponseEntity<?> deleteUser(@PathVariable("id") String userId) {
-        if (userId == null || userId.isBlank()) {
-            return ResponseEntity.badRequest().body("Invalid user ID");
-        }
-
-        try {
-            Optional<User> userOpt = userService.getUserById(userId);
-            if (userOpt.isEmpty()) {
-                log.info("Delete attempted for non-existent user: {}", userId);
-                return ResponseEntity.notFound().build();
-            }
-
-            userService.deleteUser(userId);
-            log.info("User {} deleted successfully", userId);
-            return ResponseEntity.ok().build();
-
-        } catch (Exception e) {
-            log.error("Error occurred while deleting user: " + userId, e);
-            return ResponseEntity.internalServerError()
-                .body("Failed to delete user - please try again");
-        }
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") String userId) {
+        userService.deleteUser(userId);
+        log.info("User {} deleted successfully", userId);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/delete")
     @PreAuthorize("hasPermission(null, 'USER:DELETE') or hasRole('ADMIN')")
-    public ResponseEntity<?> deleteUserPost(@RequestBody String request) {
-        try {
-            JSONObject json = new JSONObject(request);
-            String userId = json.optString("userId");
-            
-            if (userId == null || userId.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("User ID required");
-            }
-
-            Optional<User> userOpt = userService.getUserById(userId);
-            if (userOpt.isEmpty()) {
-                log.info("Delete attempted for non-existent user: {}", userId);
-                return ResponseEntity.notFound().build();
-            }
-
-            userService.deleteUser(userId);
-            log.info("User {} deleted successfully", userId);
-            return ResponseEntity.ok().build();
-
-        } catch (Exception e) {
-            log.error("Error occurred while deleting user", e);
-            return ResponseEntity.internalServerError()
-                .body("Failed to delete user - please try again");
-        }
+    public ResponseEntity<Void> deleteUserPost(@Valid @RequestBody UserIdRequestDTO request) {
+        userService.deleteUser(request.userId());
+        log.info("User {} deleted successfully", request.userId());
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/assign-role")
     @PreAuthorize("hasPermission(null, 'USER:UPDATE') or hasRole('ADMIN')")
-    public ResponseEntity<?> assignRoleToUser(@RequestBody String request) {
-        String userId = null;
-        String roleId = null;
-        
-        try {
-            JSONObject json = new JSONObject(request);
-            userId = json.optString("userId");
-            roleId = json.optString("roleId");
-            
-            if (userId == null || userId.trim().isEmpty() || roleId == null || roleId.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("User ID and Role ID required");
-            }
-
-            userService.assignRoleToUser(userId, roleId);
-            return ResponseEntity.ok("Role assigned successfully to user ID: " + userId);
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("User not found")) {
-                return ResponseEntity.status(404).body("User not found with ID: " + userId);
-            } else if (e.getMessage().contains("Role not found")) {
-                return ResponseEntity.status(404).body("Role not found with ID: " + roleId);
-            } else {
-                return ResponseEntity.badRequest().body("Role assignment failed: " + e.getMessage());
-            }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error assigning role: " + e.getMessage());
-        }
+    public ResponseEntity<String> assignRoleToUser(@Valid @RequestBody AssignRoleRequestDTO request) {
+        userService.assignRoleToUser(request.userId(), request.roleId());
+        return ResponseEntity.ok("Role assigned successfully to user ID: " + request.userId());
     }
 
-    @PreAuthorize("hasPermission(null, 'USER:UPDATE') or hasRole('ADMIN')")
     @PostMapping("/remove-role")
-    public ResponseEntity<?> removeRoleFromUser(@RequestBody String request) {
-        String userId = null;
-        String roleId = null;
-        
-        try {
-            JSONObject json = new JSONObject(request);
-            userId = json.optString("userId");
-            roleId = json.optString("roleId");
-            
-            if (userId == null || userId.trim().isEmpty() || roleId == null || roleId.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("User ID and Role ID required");
-            }
-
-            userService.removeRoleFromUser(userId, roleId);
-            return ResponseEntity.ok("Role removed successfully from user ID: " + userId);
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("User not found")) {
-                return ResponseEntity.status(404).body("User not found with ID: " + userId);
-            } else if (e.getMessage().contains("Role not found")) {
-                return ResponseEntity.status(404).body("Role not found with ID: " + roleId);
-            } else {
-                return ResponseEntity.badRequest().body("Role removal failed: " + e.getMessage());
-            }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error removing role: " + e.getMessage());
-        }
+    @PreAuthorize("hasPermission(null, 'USER:UPDATE') or hasRole('ADMIN')")
+    public ResponseEntity<String> removeRoleFromUser(@Valid @RequestBody AssignRoleRequestDTO request) {
+        userService.removeRoleFromUser(request.userId(), request.roleId());
+        return ResponseEntity.ok("Role removed successfully from user ID: " + request.userId());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/update-status")
-    public ResponseEntity<?> updateUserStatus(@RequestBody String request) {
-        String userId = null;
-        
-        try {
-            JSONObject json = new JSONObject(request);
-            userId = json.optString("userId");
-            String status = json.optString("status");
-            
-            if (userId == null || userId.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("User ID required");
-            }
-            
-            if (status == null || status.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Status required");
-            }
-
-            User updatedUser = userService.updateUserStatus(userId, status);
-            return ResponseEntity.ok(updatedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body("User not found with ID: " + userId);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error updating user status: " + e.getMessage());
-        }
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> updateUserStatus(@Valid @RequestBody UpdateUserStatusRequestDTO request) {
+        User updated = userService.updateUserStatus(request.userId(), request.status());
+        return ResponseEntity.ok(updated);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/activate")
-    public ResponseEntity<?> activateUser(@Valid @RequestBody UserRequestDTO request) {
-        String userId = request.getUserId();
-        try {
-            if (userId == null || userId.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("User ID required");
-            }
-            User activatedUser = userService.activateUser(userId);
-            return ResponseEntity.ok(UserMapper.toUserResponseDTO(activatedUser));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body("User not found");
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Internal server error");
-        }
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponseDTO> activateUser(@Valid @RequestBody UserIdRequestDTO request) {
+        User activated = userService.activateUser(request.userId());
+        return ResponseEntity.ok(UserMapper.toUserResponseDTO(activated));
     }
 
     @PostMapping("/admin/deactivate")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deactivateUser(@RequestBody String request) {
-        String userId = null;
-        
-        try {
-            JSONObject json = new JSONObject(request);
-            userId = json.optString("userId");
-            
-            if (userId == null || userId.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("User ID required");
-            }
-
-            User deactivatedUser = userService.deactivateUser(userId);
-            return ResponseEntity.ok(deactivatedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body("User not found with ID: " + userId);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error deactivating user: " + e.getMessage());
-        }
+    public ResponseEntity<User> deactivateUser(@Valid @RequestBody UserIdRequestDTO request) {
+        User deactivated = userService.deactivateUser(request.userId());
+        return ResponseEntity.ok(deactivated);
     }
 
     @GetMapping("/admin/pending")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getPendingUsers() {
-        try {
-            List<User> pendingUsers = userService.getPendingUsers();
-            return ResponseEntity.ok(pendingUsers);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error getting pending users: " + e.getMessage());
-        }
+    public ResponseEntity<List<User>> getPendingUsers() {
+        return ResponseEntity.ok(userService.getPendingUsers());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/users-by-status")
-    public ResponseEntity<?> getUsersByStatus(@RequestBody String request) {
-        try {
-            JSONObject json = new JSONObject(request);
-            String status = json.optString("status");
-            
-            if (status == null || status.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Status required");
-            }
-
-            List<User> users = userService.getUsersByStatus(status);
-            return ResponseEntity.ok(users);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error getting users by status: " + e.getMessage());
-        }
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<User>> getUsersByStatus(@Valid @RequestBody StatusFilterRequestDTO request) {
+        return ResponseEntity.ok(userService.getUsersByStatus(request.status()));
     }
 
-    @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
     @PostMapping("/find")
-    public ResponseEntity<?> findUser(@RequestBody String request) {
-        try {
-            JSONObject json = new JSONObject(request);
-            String userId = json.optString("userId");
-            String username = json.optString("username");
-            
-            if (userId != null && !userId.trim().isEmpty()) {
-                Optional<User> user = userService.getUserById(userId);
-                if (user.isPresent()) {
-                    return ResponseEntity.ok(user.get());
-                } else {
-                    return ResponseEntity.status(404).body("User not found with ID: " + userId);
-                }
-            }
-            
-            if (username != null && !username.trim().isEmpty()) {
-                Optional<User> user = userService.getUserByUsername(username);
-                if (user.isPresent()) {
-                    return ResponseEntity.ok(user.get());
-                } else {
-                    return ResponseEntity.status(404).body("User not found with username: " + username);
-                }
-            }
-            
-            return ResponseEntity.badRequest().body("Either userId or username required");
-            
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error finding user: " + e.getMessage());
+    @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
+    public ResponseEntity<User> findUser(@RequestBody FindUserRequestDTO request) {
+        String userId = request.userId();
+        String username = request.username();
+
+        if (userId != null && !userId.isBlank()) {
+            User user = userService.getUserById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+            return ResponseEntity.ok(user);
         }
+
+        if (username != null && !username.isBlank()) {
+            User user = userService.getUserByUsername(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User with username '" + username + "' not found"));
+            return ResponseEntity.ok(user);
+        }
+
+        throw new BusinessValidationException("Either userId or username is required");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody String request) {
-        try {
-            JSONObject json = new JSONObject(request);
-            String usernameOrEmail = json.optString("username");
-            String password = json.optString("password");
+    public ResponseEntity<String> login(@Valid @RequestBody LoginRequestDTO request) {
+        String identifier = request.username();
+        Optional<User> userOpt = userService.getUserByUsername(identifier)
+                .or(() -> userService.getUserByEmail(identifier));
 
-            Optional<User> userOpt = userService.getUserByUsername(usernameOrEmail);
-            if (!userOpt.isPresent()) {
-                userOpt = userService.getUserByEmail(usernameOrEmail);
-            }
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                boolean match = pwdEncoder.matches(password, user.getPassword());
-                if (match) {
-                    // Create new session
-                    UserSession session = sessionService.createSession(user.getUserId());
-                    
-                    JSONObject userJson = new JSONObject();
-                    userJson.put("userId", user.getUserId());
-                    userJson.put("username", user.getUsername());
-                    userJson.put("email", user.getEmail());
-                    userJson.put("firstName", user.getFirstName());
-                    userJson.put("lastName", user.getLastName());
-                    userJson.put("status", user.getStatus());
-                    List<JSONObject> loginRoles = new ArrayList<>();
-                    if (user.getRoles() != null) {
-                        for (Role role : user.getRoles()) {
-                            JSONObject r = new JSONObject();
-                            r.put("roleId", role.getRoleId());
-                            r.put("name", role.getName());
-                            loginRoles.add(r);
-                        }
-                    }
-                    userJson.put("roles", loginRoles);
-                    userJson.put("token", session.getToken());
-                    
-                    JSONObject result = new JSONObject();
-                    result.put("success", true);
-                    result.put("user", userJson);
-                    return ResponseEntity.ok(result.toString());
+        if (userOpt.isPresent() && pwdEncoder.matches(request.password(), userOpt.get().getPassword())) {
+            User user = userOpt.get();
+            UserSession session = sessionService.createSession(user.getUserId());
+
+            JSONObject userJson = new JSONObject();
+            userJson.put("userId", user.getUserId());
+            userJson.put("username", user.getUsername());
+            userJson.put("email", user.getEmail());
+            userJson.put("firstName", user.getFirstName());
+            userJson.put("lastName", user.getLastName());
+            userJson.put("status", user.getStatus());
+            List<JSONObject> loginRoles = new ArrayList<>();
+            if (user.getRoles() != null) {
+                for (Role role : user.getRoles()) {
+                    JSONObject r = new JSONObject();
+                    r.put("roleId", role.getRoleId());
+                    r.put("name", role.getName());
+                    loginRoles.add(r);
                 }
             }
-            JSONObject fail = new JSONObject();
-            fail.put("success", false);
-            fail.put("message", "Invalid username or password");
-            return ResponseEntity.status(401).body(fail.toString());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Login error: " + e.getMessage());
+            userJson.put("roles", loginRoles);
+            userJson.put("token", session.getToken());
+
+            JSONObject result = new JSONObject();
+            result.put("success", true);
+            result.put("user", userJson);
+            return ResponseEntity.ok(result.toString());
         }
+
+        JSONObject fail = new JSONObject();
+        fail.put("success", false);
+        fail.put("message", "Invalid username or password");
+        return ResponseEntity.status(401).body(fail.toString());
     }
 
     @PostMapping("/login-encrypt")
-    public ResponseEntity<?> loginEncrypt(@Valid @RequestBody UserRequestDTO request) {
-        try {
-            String usernameOrEmail = request.getUsername();
-            String password = request.getPassword();
-            Optional<User> userOpt = userService.getUserByUsername(usernameOrEmail);
-            if (!userOpt.isPresent()) {
-                userOpt = userService.getUserByEmail(usernameOrEmail);
-            }
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                boolean match = pwdEncoder.matches(password, user.getPassword());
-                if (match) {
-                    java.util.List<Role> roles = new java.util.ArrayList<>(user.getRoles());
-                    String encryptedRoles = roleEncryptor.encryptRoles(roles);
-                    JSONObject result = new JSONObject();
-                    result.put("userId", user.getUserId());
-                    result.put("username", user.getUsername());
-                    result.put("email", user.getEmail());
-                    result.put("roles_encrypted", encryptedRoles);
-                    return ResponseEntity.ok(result.toString());
-                }
-            }
-            return ResponseEntity.status(401).body("Invalid credentials");
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Internal server error");
+    public ResponseEntity<String> loginEncrypt(@Valid @RequestBody LoginRequestDTO request) throws Exception {
+        String identifier = request.username();
+        Optional<User> userOpt = userService.getUserByUsername(identifier)
+                .or(() -> userService.getUserByEmail(identifier));
+
+        if (userOpt.isPresent() && pwdEncoder.matches(request.password(), userOpt.get().getPassword())) {
+            User user = userOpt.get();
+            List<Role> roles = new ArrayList<>(user.getRoles());
+            String encryptedRoles = roleEncryptor.encryptRoles(roles);
+            JSONObject result = new JSONObject();
+            result.put("userId", user.getUserId());
+            result.put("username", user.getUsername());
+            result.put("email", user.getEmail());
+            result.put("roles_encrypted", encryptedRoles);
+            return ResponseEntity.ok(result.toString());
         }
+        return ResponseEntity.status(401).body("Invalid credentials");
     }
 
-} 
+    private static Sort parseSort(String sort) {
+        String[] parts = sort.split(",");
+        Sort.Direction direction = parts.length > 1 && "asc".equalsIgnoreCase(parts[1])
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+        return Sort.by(direction, parts[0]);
+    }
+}
