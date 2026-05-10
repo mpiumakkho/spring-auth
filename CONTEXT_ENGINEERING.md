@@ -5,7 +5,7 @@
 ## ข้อสังเกตสำคัญ
 
 - **Core API เปิดสิทธิ์ทุกคำขอ**: การตั้งค่า `SecurityFilterChain` อนุญาต `permitAll()` สำหรับทุกเส้นทาง ยังไม่มีการป้องกันที่ขอบบริการ
-- **เส้นทาง (path) ใน Web API ไม่สอดคล้องกับ context-path `/demo`**: ใน `web-api` มีการตั้งค่า `server.servlet.context-path=/demo` แต่ `SecurityConfig` อนุญาตหน้า `/login` และกำหนด `loginPage`/`loginProcessingUrl` เป็น `/` ขณะที่ `SessionFilter` ใช้รายการยกเว้นเป็น `/demo/...` ทำให้ไม่ตรงกัน
+- **เส้นทาง (path) ใน Web API ไม่สอดคล้องกับ context-path `/ums`**: ใน `web-api` มีการตั้งค่า `server.servlet.context-path=/ums` แต่ `SecurityConfig` อนุญาตหน้า `/login` และกำหนด `loginPage`/`loginProcessingUrl` เป็น `/` ขณะที่ `SessionFilter` ใช้รายการยกเว้นเป็น `/ums/...` ทำให้ไม่ตรงกัน
 - **คีย์ AES ฮาร์ดโค้ดใน `AESUtil`**: ใช้คีย์คงที่ในซอร์ส ไม่เหมาะสมกับการใช้งานจริง ควรย้ายไปจัดการผ่าน secrets/environment และทบทวนความจำเป็นของการเข้ารหัสบทบาท
 - **บั๊กชุดบทบาทที่อนุญาตใน `SessionAuthSuccessHandler`**: ค่าหนึ่งถูกรวมเป็นสตริงยาว (`"ROLE_SUPPORT, ROLE_USER"`) แทนที่จะเป็น 2 ค่าแยกกัน
 - **รูปแบบการตอบกลับจาก Login**: ส่งคืนเอนทิตีบทบาทโดยตรงและส่ง JSON เป็นสตริง ควรใช้ DTO สม่ำเสมอและส่งคืนอ็อบเจ็กต์ JSON โดยตรง
@@ -13,9 +13,9 @@
 
 ## งานที่ทำได้เร็ว (1–2 วัน)
 
-- **ปรับ `web-api` ให้สอดคล้องกับ `/demo`**
-  - ตั้งค่า `loginPage` และ `loginProcessingUrl` เป็น `/demo/login`
-  - ปรับ `requestMatchers` ให้ใช้ `/demo/**` ให้ตรงกับ `SessionFilter`
+- **ปรับ `web-api` ให้สอดคล้องกับ `/ums`**
+  - ตั้งค่า `loginPage` และ `loginProcessingUrl` เป็น `/ums/login`
+  - ปรับ `requestMatchers` ให้ใช้ `/ums/**` ให้ตรงกับ `SessionFilter`
 - **แก้บั๊ก `allowedRoles`** ใน `SessionAuthSuccessHandler` ให้แยก `"ROLE_SUPPORT"` และ `"ROLE_USER"`
 - **ปรับการตอบกลับของ Login**
   - ส่งคืนรายชื่อบทบาท (role names) แทนเอนทิตีบทบาท ใช้ `UserResponseDTO`
@@ -61,7 +61,7 @@
 
 ## แผนส่งมอบเป็นชุดเล็ก (ลำดับ)
 
-1. ปรับ Security ใน `web-api` ให้ตรงกับ `/demo` และแก้บั๊ก `allowedRoles`
+1. ปรับ Security ใน `web-api` ให้ตรงกับ `/ums` และแก้บั๊ก `allowedRoles`
 2. ปรับ login response ให้ใช้ DTO (ไม่รั่วไหลเอนทิตี) และส่ง JSON อ็อบเจ็กต์
 3. เพิ่ม method-level security ใน `core-api` และ inter-service auth แบบ shared secret
 4. ปรับปรุงบริการเซสชัน/ดัชนีฐานข้อมูล

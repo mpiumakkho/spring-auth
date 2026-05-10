@@ -29,22 +29,22 @@ public class SessionFilter extends OncePerRequestFilter {
     
     // pages that don't need login
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
-        "/demo",
-        "/demo/",
-        "/demo/login",
-        "/demo/auth/login",
+        "/ums",
+        "/ums/",
+        "/ums/login",
+        "/ums/auth/login",
         "/error"
     );
     
     // files that don't need login
     private static final List<String> PUBLIC_RESOURCE_PATHS = Arrays.asList(
-        "/demo/resources/",
-        "/demo/static/",
-        "/demo/css/",
-        "/demo/js/",
-        "/demo/images/",
-        "/demo/fonts/",
-        "/demo/favicon.ico"
+        "/ums/resources/",
+        "/ums/static/",
+        "/ums/css/",
+        "/ums/js/",
+        "/ums/images/",
+        "/ums/fonts/",
+        "/ums/favicon.ico"
     );
     
     @Value("${core.api.url}")
@@ -119,7 +119,7 @@ public class SessionFilter extends OncePerRequestFilter {
             }
         }
 
-        response.sendRedirect("/demo");
+        response.sendRedirect("/ums");
     }
     
     private boolean isPublicPath(String path) {

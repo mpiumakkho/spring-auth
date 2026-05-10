@@ -1,134 +1,142 @@
-# rbac-ums (User Management System)
+# rbac-ums
+
+> User Management System with Role-Based Access Control — Java 21 · Spring Boot 3.5 · PostgreSQL 16
 
 ![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=java)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5.0-brightgreen?style=flat-square&logo=spring-boot)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql)
 
-ระบบจัดการผู้ใช้งานพร้อม Role-Based Access Control (RBAC) แบ่งเป็น 2 services: **Core API** (backend) และ **Web API** (frontend)
+ระบบจัดการผู้ใช้พร้อม RBAC แยกเป็น 2 services:
 
-## Architecture
+- **core-api** — REST backend + JPA + RBAC
+- **web-api** — Thymeleaf UI ที่เรียก core-api ผ่าน `X-API-Key`
 
-```
-Web API (:8081/demo)          Core API (:8091)
-┌──────────────────┐          ┌──────────────────────┐
-│ Thymeleaf UI     │  REST    │ REST Controllers     │
-│ Controllers      │─────────>│ Service / Repository │
-│ SessionFilter    │ X-API-Key│ TokenFilter + RBAC   │
-└──────────────────┘          │ PostgreSQL (JPA)     │
-                              └──────────────────────┘
-```
+---
 
-## Tech Stack
+## Quick Start
 
-| Layer | Technology |
-|-------|-----------|
-| Language | Java 21 |
-| Framework | Spring Boot 3.5.0, Spring Security |
-| Database | PostgreSQL 16, Flyway migrations |
-| ORM | Spring Data JPA (Hibernate) |
-| Frontend | Thymeleaf 3.1 |
-| Auth | BCrypt ($2A/12), UUID token sessions |
-| API Docs | Springdoc OpenAPI (Swagger UI) |
-| Build | Maven 3.9.5 |
-
-## Security
-
-- **Inter-service auth**: API key (`X-API-Key` header) ระหว่าง web-api กับ core-api
-- **User auth**: UUID token-based sessions (30 min timeout, auto cleanup)
-- **Password**: BCrypt $2A cost=12
-- **RBAC**: `@PreAuthorize` + custom `PermissionEvaluator`
-- **Permission model**: `ROLE_ADMIN`, `PERM_USER:READ`, `PERM_ROLE:UPDATE`
-- **CSRF**: เปิดสำหรับ web-api (Thymeleaf), ปิดสำหรับ core-api (stateless)
-- **Rate limiting**: 10 req/min per IP บน login/session endpoints
-
-## Getting Started
-
-### Prerequisites
-- Java 21+, Maven 3.9+, PostgreSQL 16+
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/postgres` | Database URL |
-| `DB_USERNAME` | `postgres` | Database username |
-| `DB_PASSWORD` | `P@ss4321` | Database password |
-| `AES_KEY` | `1234567890123456` | AES encryption key (16 chars) |
-| `API_KEY` | `changeme-dev-api-key-2024` | Inter-service API key |
-
-### Run
-
-```bash
-# Core API (start first)
-cd core-api && mvn spring-boot:run
-
-# Web API
-cd web-api && mvn spring-boot:run
-```
-
-### Docker
+**ผ่าน Docker** (ง่ายสุด — รวม PostgreSQL + ทั้ง 2 services)
 
 ```bash
 docker-compose up -d
 ```
 
-### Access
+**รัน local** (ต้องมี PostgreSQL 16 ทำงานอยู่ก่อน)
+
+```bash
+cd core-api && ./mvnw spring-boot:run    # :8091
+cd web-api  && ./mvnw spring-boot:run    # :8081/ums
+```
+
+จากนั้นเปิด:
 
 | Service | URL |
-|---------|-----|
-| Web UI | http://localhost:8081/demo |
-| Swagger UI | http://localhost:8091/swagger-ui.html |
-| Health Check | http://localhost:8091/actuator/health |
+| --- | --- |
+| Web UI | <http://localhost:8081/ums> |
+| Swagger | <http://localhost:8091/swagger-ui.html> |
+| Health | <http://localhost:8091/actuator/health> |
 
-## API Endpoints
+Login ด้วย `admin` / `password` (ดู [Default Accounts](#default-accounts))
 
-### Authentication
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/api/users/login` | Login |
-| POST | `/api/sessions/validate` | Validate token |
-| POST | `/api/sessions/keep-alive` | Refresh session |
-| POST | `/api/sessions/logout` | Logout |
+---
 
-### Users (`/api/users`)
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/users` | List all |
-| POST | `/api/users/create` | Create |
-| PUT | `/api/users/update` | Update |
-| DELETE | `/api/users/{id}` | Delete |
-| POST | `/api/users/assign-role` | Assign role |
-| POST | `/api/users/remove-role` | Remove role |
+## Architecture
 
-### Roles (`/api/roles`)
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/roles` | List all |
-| POST | `/api/roles/create` | Create |
-| PUT | `/api/roles/update` | Update |
-| POST | `/api/roles/assign-permission` | Assign permission |
+```text
+Web API (:8081/ums)             Core API (:8091)
+┌──────────────────┐             ┌──────────────────────┐
+│ Thymeleaf UI     │   X-API-Key │ REST Controllers     │
+│ Controllers      │ ──────────► │ Service / Repository │
+│ SessionFilter    │  REST/JSON  │ TokenFilter + RBAC   │
+└──────────────────┘             │ PostgreSQL (JPA)     │
+                                 └──────────────────────┘
+```
 
-### Permissions (`/api/permissions`)
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/permissions` | List all |
-| POST | `/api/permissions/create` | Create |
-| PUT | `/api/permissions/update` | Update |
+## Tech Stack
+
+- **Backend** — Java 21, Spring Boot 3.5, Spring Security
+- **Database** — PostgreSQL 16, Flyway migrations
+- **ORM** — Spring Data JPA (Hibernate)
+- **Frontend** — Thymeleaf 3.1
+- **Auth** — BCrypt $2A cost=12 + UUID token sessions
+- **Docs** — Springdoc OpenAPI (Swagger UI)
+- **Build** — Maven 3.9+ (wrapper included: `./mvnw`)
+
+## Security
+
+- **Inter-service auth** — `X-API-Key` header ระหว่าง web-api กับ core-api
+- **User auth** — UUID token sessions (30 นาที idle timeout, scheduled cleanup)
+- **Password hashing** — BCrypt $2A cost=12
+- **RBAC** — `@PreAuthorize` + custom `PermissionEvaluator`; permission format: `USER:READ`, `ROLE:UPDATE`, ฯลฯ
+- **CSRF** — เปิดสำหรับ web-api (form-based), ปิดสำหรับ core-api (stateless)
+- **Rate limiting** — 10 req/min ต่อ IP บน login + session endpoints
+- **Input validation** — Jakarta Bean Validation บนทุก controller; `GlobalExceptionHandler` คืน error format มาตรฐาน
+- **Encryption** — AES/GCM/NoPadding (random IV) สำหรับ role payload
+
+---
+
+## Configuration
+
+| Variable | Default | Note |
+| --- | --- | --- |
+| `DB_URL` | `jdbc:postgresql://localhost:5432/postgres` | |
+| `DB_USERNAME` | `postgres` | |
+| `DB_PASSWORD` | `P@ss4321` | |
+| `AES_KEY` | `1234567890123456` | 16 chars · **เปลี่ยนใน production** |
+| `API_KEY` | `changeme-dev-api-key-2024` | inter-service · **เปลี่ยนใน production** |
+
+## API Reference
+
+ดู endpoints ทั้งหมดผ่าน Swagger UI หรือ Postman collection ใน [`core-api/UMS Core API - Full Collection.postman_collection.json`](core-api/UMS%20Core%20API%20-%20Full%20Collection.postman_collection.json)
+
+ตัวอย่างที่ใช้บ่อย:
+
+**Auth** — `/api/users`, `/api/sessions`
+
+- `POST /api/users/login` — login (รับ `username` หรือ `email` + `password`)
+- `POST /api/sessions/validate` — ตรวจ token
+- `POST /api/sessions/keep-alive` — refresh session
+- `POST /api/sessions/logout` — logout
+
+**Users** — `/api/users`
+
+- `GET /api/users?page=0&size=20&sort=createdAt,desc` — paginated list
+- `POST /api/users/create` · `PUT /api/users/update` · `DELETE /api/users/{id}`
+- `POST /api/users/assign-role` · `POST /api/users/remove-role`
+
+**Roles** — `/api/roles`
+
+- `GET /api/roles?page=&size=&sort=` — paginated list
+- `POST /api/roles/create` · `PUT /api/roles/update` · `POST /api/roles/delete`
+- `POST /api/roles/assign-permission` · `POST /api/roles/remove-permission`
+
+**Permissions** — `/api/permissions`
+
+- `GET /api/permissions?page=&size=&sort=` — paginated list
+- `POST /api/permissions/create` · `PUT /api/permissions/update` · `POST /api/permissions/delete`
+
+---
 
 ## Default Accounts
 
-| Username | Role | Password |
-|----------|------|----------|
-| `admin` | SUPER_ADMIN | `password` |
-| `manager` | USER_MANAGER | `password` |
-| `viewer` | VIEWER | `password` |
-| `mod` | MODERATOR | `password` |
-| `analyst` | ANALYST | `password` |
-| `support` | SUPPORT | `password` |
+Password เริ่มต้นทุก account คือ `password`
 
-## Testing
+| Username | Role |
+| --- | --- |
+| `admin` | SUPER_ADMIN |
+| `manager` | USER_MANAGER |
+| `viewer` | VIEWER |
+| `mod` | MODERATOR |
+| `analyst` | ANALYST |
+| `support` | SUPPORT |
+
+## Development
 
 ```bash
-cd core-api && mvn test
-cd web-api && mvn test
+# Run tests
+cd core-api && ./mvnw test
+cd web-api  && ./mvnw test
 ```
+
+- **Roadmap** — [ROADMAP.md](ROADMAP.md)
+- **Code-review notes** — [CONTEXT_ENGINEERING.md](CONTEXT_ENGINEERING.md)

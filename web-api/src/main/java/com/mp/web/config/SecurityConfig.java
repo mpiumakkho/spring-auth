@@ -35,7 +35,7 @@ public class SecurityConfig {
                 .authenticationProvider(coreApiAuthProvider)
                 .addFilterBefore(sessionFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/auth/login", "/resources/**", "/static/**", "/css/**", "/js/**", "/images/**", "/demo/css/**", "/demo/js/**", "/demo/images/**", "/demo/static/**").permitAll()
+                .requestMatchers("/", "/login", "/auth/login", "/resources/**", "/static/**", "/css/**", "/js/**", "/images/**", "/ums/css/**", "/ums/js/**", "/ums/images/**", "/ums/static/**").permitAll()
                 // admin area
                 .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
                 // user management
