@@ -38,6 +38,9 @@ jobs:
           java-version: '21'
           cache: maven
 
+      - name: Make mvnw executable
+        run: chmod +x ./mvnw
+
       - name: Build & test (with PostgreSQL)
         env:
           DB_URL: jdbc:postgresql://localhost:5432/postgres
@@ -68,6 +71,9 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+
+      - name: Make mvnw executable
+        run: chmod +x ./mvnw
 
       - name: Build & test
         run: ./mvnw -B verify
