@@ -6,7 +6,9 @@ import java.util.Date;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mp.core.entity.Notification;
@@ -26,18 +28,23 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @Transactional
-    public Notification notify(String userId, String type, String title, String message) {
+    @Async("eventExecutor")
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void notify(String userId, String type, String title, String message) {
         if (userId == null || userId.isBlank()) {
             log.warn("Skipped notification with no userId: type={}, title={}", type, title);
-            return null;
+            return;
         }
-        Notification n = new Notification();
-        n.setUserId(userId);
-        n.setType(type);
-        n.setTitle(title);
-        n.setMessage(message);
-        return repo.save(n);
+        try {
+            Notification n = new Notification();
+            n.setUserId(userId);
+            n.setType(type);
+            n.setTitle(title);
+            n.setMessage(message);
+            repo.save(n);
+        } catch (Exception e) {
+            log.error("Failed to write notification for {}: {}", userId, e.getMessage());
+        }
     }
 
     @Override

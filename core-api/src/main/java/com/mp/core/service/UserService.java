@@ -39,4 +39,7 @@ public interface UserService {
     User updateProfile(String userId, String firstName, String lastName, String phone, String bio);
 
     User updateAvatarUrl(String userId, String avatarUrl);
+
+    /** Cached lookup of a user's role names (cache: userRoles). */
+    java.util.Set<String> getUserRoleNames(String userId);
 }

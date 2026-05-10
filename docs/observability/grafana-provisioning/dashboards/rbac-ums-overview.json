@@ -1,0 +1,84 @@
+{
+  "title": "rbac-ums overview",
+  "uid": "rbac-ums-overview",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "tags": ["rbac-ums"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP request rate (rps)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (uri) (rate(http_server_requests_seconds_count{application=\"core-api\"}[1m]))",
+          "legendFormat": "{{uri}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "p95 latency by URI",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (uri, le) (rate(http_server_requests_seconds_bucket{application=\"core-api\"}[5m])))",
+          "legendFormat": "{{uri}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Error rate (5xx) %",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "100 * sum(rate(http_server_requests_seconds_count{application=\"core-api\",status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"core-api\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "JVM heap used (MB)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 8 },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{application=\"core-api\",area=\"heap\"} / 1024 / 1024",
+          "legendFormat": "{{id}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "DB connections (Hikari)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "hikaricp_connections_active{application=\"core-api\"}", "legendFormat": "active" },
+        { "expr": "hikaricp_connections_idle{application=\"core-api\"}", "legendFormat": "idle" }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Cache gets/puts (rolePermissions)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 8 },
+      "targets": [
+        { "expr": "rate(cache_gets_total{cache=\"rolePermissions\"}[1m])", "legendFormat": "gets-{{result}}" },
+        { "expr": "rate(cache_puts_total{cache=\"rolePermissions\"}[1m])", "legendFormat": "puts" }
+      ]
+    }
+  ]
+}

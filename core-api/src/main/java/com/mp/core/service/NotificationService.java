@@ -7,7 +7,8 @@ import com.mp.core.entity.Notification;
 
 public interface NotificationService {
 
-    Notification notify(String userId, String type, String title, String message);
+    /** Fire-and-forget notification dispatch. Implementation runs on the event executor pool. */
+    void notify(String userId, String type, String title, String message);
 
     Page<Notification> list(String userId, Pageable pageable);
 

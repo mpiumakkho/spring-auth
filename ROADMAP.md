@@ -1,6 +1,6 @@
 # rbac-ums Development Roadmap
 
-> Last updated: 2026-05-10
+> Last updated: 2026-05-10 (Phase 3 partial — see status table)
 
 แผนพัฒนาต่อยอดระบบ User Management System (RBAC) แบ่งเป็น 3 phases
 
@@ -297,7 +297,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Medium |
 | **Depends on** | 2.1 JWT Token |
 
@@ -318,7 +318,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[~]` In Progress (in-process @Async; full Kafka/RabbitMQ broker requires deployment) |
 | **Complexity** | High |
 | **Depends on** | 1.1 Audit Log, 2.5 Notification |
 
@@ -339,7 +339,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Medium |
 | **Depends on** | - |
 
@@ -359,7 +359,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Medium |
 | **Depends on** | 3.3 CI/CD |
 

@@ -40,7 +40,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8091/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8091/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -64,8 +64,43 @@ services:
     networks:
       - rbac-network
 
+  # Prometheus - scrapes /actuator/prometheus from core-api
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: rbac-prometheus
+    profiles: [observability]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docs/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - rbac-network
+
+  # Grafana - pre-provisioned with the rbac-ums dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: rbac-grafana
+    profiles: [observability]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docs/observability/grafana-provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - rbac-network
+
 volumes:
   postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
     driver: local
 
 networks:

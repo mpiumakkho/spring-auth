@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -114,6 +116,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "userRoles", key = "#id")
     public void deleteUser(String id) {
         if (!userRepo.existsById(id)) {
             log.warn("Attempted to delete non-existent user: {}", id);
@@ -145,6 +148,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "userRoles", key = "#userId")
     public void assignRoleToUser(String userId, String roleId) {
         User user = userRepo.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User", userId));
@@ -168,6 +172,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "userRoles", key = "#userId")
     public void removeRoleFromUser(String userId, String roleId) {
         User user = userRepo.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User", userId));
@@ -311,6 +316,19 @@ public class UserServiceImpl implements UserService {
         User saved = userRepo.save(user);
         auditService.log(user.getUsername(), "UPDATE_PROFILE", "USER", userId, "Profile updated");
         return saved;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "userRoles", key = "#userId")
+    public java.util.Set<String> getUserRoleNames(String userId) {
+        return userRepo.findById(userId)
+                .map(u -> u.getRoles() == null
+                        ? java.util.Set.<String>of()
+                        : u.getRoles().stream()
+                                .map(com.mp.core.entity.Role::getName)
+                                .collect(java.util.stream.Collectors.toUnmodifiableSet()))
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
 
     @Override

@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -130,6 +132,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "rolePermissions", key = "#roleId")
     public void assignPermissionToRole(String roleId, String permissionId) {
         Role role = roleRepo.findById(roleId)
             .orElseThrow(() -> {
@@ -155,6 +158,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "rolePermissions", key = "#roleId")
     public void removePermissionFromRole(String roleId, String permissionId) {
         Role role = roleRepo.findById(roleId)
             .orElseThrow(() -> new ResourceNotFoundException("Role", roleId));
@@ -182,6 +186,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "rolePermissions", key = "#roleId")
     public List<Permission> getRolePermissions(String roleId) {
         return roleRepo.findById(roleId)
             .map(role -> role.getPermissions().stream()
@@ -189,4 +194,4 @@ public class RoleServiceImpl implements RoleService {
                 .collect(Collectors.toList()))
             .orElseThrow(() -> new ResourceNotFoundException("Role", roleId));
     }
-} 
+}

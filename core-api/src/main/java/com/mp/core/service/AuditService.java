@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class AuditService {
         this.auditRepo = auditRepo;
     }
 
+    @Async("eventExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(String actor, String action, String targetType, String targetId, String detail) {
         try {
