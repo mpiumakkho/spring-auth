@@ -16,7 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mp.core.entity.Permission;
 import com.mp.core.entity.Role;
+import com.mp.core.entity.Tenant;
 import com.mp.core.exception.BusinessValidationException;
+import com.mp.core.security.TenantContext;
+
 import com.mp.core.exception.DuplicateResourceException;
 import com.mp.core.exception.ResourceNotFoundException;
 import com.mp.core.repository.PermissionRepository;
@@ -40,21 +43,26 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public Role createRole(Role role) {
+        if (role.getTenantId() == null || role.getTenantId().isBlank()) {
+            String ctx = TenantContext.get();
+            role.setTenantId(ctx != null ? ctx : Tenant.DEFAULT_TENANT_ID);
+        }
+
         String roleName = role.getName();
-        
+
         if (roleName == null || roleName.trim().isEmpty()) {
             log.warn("Attempt to create role with empty name");
             throw new BusinessValidationException("Role name cannot be empty");
         }
-        
+
         if (roleRepo.existsByName(roleName)) {
-            log.warn("Role name '{}' already exists", roleName);
+            log.warn("Role name '{}' already exists in tenant {}", roleName, role.getTenantId());
             throw new DuplicateResourceException("Role", "name", roleName);
         }
 
         role.setName(roleName.toUpperCase());
-        
-        log.info("Creating new role: {}", roleName);
+
+        log.info("Creating new role: {} (tenant={})", roleName, role.getTenantId());
         Role saved = roleRepo.save(role);
         auditService.log(role.getCreatedBy(), "CREATE", "ROLE", saved.getRoleId(), "Created role: " + saved.getName());
         return saved;

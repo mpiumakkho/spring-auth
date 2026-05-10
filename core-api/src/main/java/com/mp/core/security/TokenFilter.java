@@ -56,6 +56,12 @@ public class TokenFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
+        // Let CORS preflight through without API key/JWT — Spring's CorsFilter handles it
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (path.startsWith("/api/")) {
             String requestApiKey = request.getHeader(API_KEY_HEADER);
             if (requestApiKey == null || !java.security.MessageDigest.isEqual(
@@ -73,11 +79,21 @@ public class TokenFilter extends OncePerRequestFilter {
             if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 authenticateJwt(token, request);
             }
+            // For unauthenticated public endpoints, allow X-Tenant-Id header as a
+            // hint (e.g. signup flow that needs to know which tenant the slug maps to).
+            if (TenantContext.get() == null) {
+                String headerTenant = request.getHeader("X-Tenant-Id");
+                if (headerTenant != null && !headerTenant.isBlank()) {
+                    TenantContext.set(headerTenant);
+                }
+            }
+            filterChain.doFilter(request, response);
         } catch (Exception e) {
             log.error("Cannot set user authentication: {}", e.getMessage());
+            filterChain.doFilter(request, response);
+        } finally {
+            TenantContext.clear();
         }
-
-        filterChain.doFilter(request, response);
     }
 
     private String extractToken(HttpServletRequest request) {
@@ -98,18 +114,27 @@ public class TokenFilter extends OncePerRequestFilter {
         }
         Claims claims = jws.getPayload();
         String username = claims.get("username", String.class);
+        String tenantId = claims.get("tid", String.class);
         @SuppressWarnings("unchecked")
         List<String> roles = (List<String>) claims.getOrDefault("roles", List.of());
         @SuppressWarnings("unchecked")
         List<String> perms = (List<String>) claims.getOrDefault("perms", List.of());
 
+        boolean superAdmin = false;
         List<GrantedAuthority> authorities = new ArrayList<>();
         for (String role : roles) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+            String upper = role.toUpperCase();
+            if ("SUPER_ADMIN".equals(upper)) superAdmin = true;
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + upper));
         }
         for (String perm : perms) {
             authorities.add(new SimpleGrantedAuthority("PERM_" + perm));
         }
+
+        if (tenantId != null) {
+            TenantContext.set(tenantId);
+        }
+        TenantContext.setSuperAdmin(superAdmin);
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 username != null ? username : claims.getSubject(),

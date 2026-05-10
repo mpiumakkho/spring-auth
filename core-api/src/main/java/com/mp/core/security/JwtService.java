@@ -63,6 +63,7 @@ public class JwtService {
                 .issuedAt(now)
                 .expiration(exp)
                 .claim("username", user.getUsername())
+                .claim("tid", user.getTenantId())
                 .claim("roles", List.copyOf(roles))
                 .claim("perms", List.copyOf(permissions))
                 .signWith(signingKey, Jwts.SIG.HS256)

@@ -8,6 +8,10 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -30,12 +34,17 @@ import lombok.Setter;
 @Entity
 @Table(name = "users", schema = "sample_app")
 @EntityListeners(AuditingEntityListener.class)
+@FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = String.class))
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String userId;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
+
+    @Column(nullable = false, length = 100)
     private String username;
 
     @Column(nullable = false)

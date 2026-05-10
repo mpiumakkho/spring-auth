@@ -1,6 +1,6 @@
 # rbac-ums Development Roadmap
 
-> Last updated: 2026-05-10 (Phase 3 partial — see status table)
+> Last updated: 2026-05-10 (Phase 3 complete — see status table)
 
 แผนพัฒนาต่อยอดระบบ User Management System (RBAC) แบ่งเป็น 3 phases
 
@@ -380,7 +380,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | High |
 | **Depends on** | 2.6 API Versioning |
 
@@ -401,7 +401,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | High |
 | **Depends on** | 3.5 Multi-tenancy |
 
@@ -421,7 +421,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[~]` In Progress (Vite + React + TS SPA scaffolded with login/dashboard/users/tenants pages; Thymeleaf web-api still parallel until SPA reaches feature parity) |
 | **Complexity** | High |
 | **Depends on** | 2.6 API Versioning, 3.1 Caching |
 

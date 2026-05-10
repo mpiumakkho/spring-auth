@@ -16,8 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mp.core.entity.Role;
+import com.mp.core.entity.Tenant;
 import com.mp.core.entity.User;
 import com.mp.core.entity.UserStatus;
+import com.mp.core.security.TenantContext;
 import com.mp.core.exception.AccountLockedException;
 import com.mp.core.exception.BusinessValidationException;
 import com.mp.core.exception.DuplicateResourceException;
@@ -57,16 +59,21 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User createUser(User user) {
+        if (user.getTenantId() == null || user.getTenantId().isBlank()) {
+            String ctx = TenantContext.get();
+            user.setTenantId(ctx != null ? ctx : Tenant.DEFAULT_TENANT_ID);
+        }
+
         if (userRepo.existsByUsername(user.getUsername())) {
             log.warn("Username {} is already taken", user.getUsername());
             throw new DuplicateResourceException("User", "username", user.getUsername());
         }
-        
+
         String email = user.getEmail();
         if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             throw new BusinessValidationException("Invalid email format");
         }
-        
+
         if (userRepo.existsByEmail(email)) {
             log.warn("Email {} is already registered", email);
             throw new DuplicateResourceException("User", "email", email);
@@ -77,8 +84,8 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setStatus(UserStatus.PENDING);
-        
-        log.info("Creating new user account for: {}", user.getUsername());
+
+        log.info("Creating new user account for: {} (tenant={})", user.getUsername(), user.getTenantId());
         User saved = userRepo.save(user);
         auditService.log(user.getCreatedBy(), "CREATE", "USER", saved.getUserId(), "Created user: " + saved.getUsername());
         return saved;

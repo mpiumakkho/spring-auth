@@ -1,5 +1,8 @@
 package com.mp.core.config;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -11,32 +14,24 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.mp.core.security.CustomPermissionEvaluator;
 import com.mp.core.security.RateLimitFilter;
 import com.mp.core.security.TokenFilter;
 
-/**
- * Spring Security configuration for Core API.
- * 
- * Features:
- * - Token-based authentication (stateless)
- * - Method security with custom permission evaluator
- * - RBAC (Role-Based Access Control)
- * - Fine-grained permission checks
- * 
- * Security Components:
- * - TokenFilter: Validates tokens and sets authentication
- * - CustomPermissionEvaluator: Evaluates @PreAuthorize permissions
- * - BCryptPasswordEncoder: Password hashing
- */
 @Configuration
-@EnableMethodSecurity  // Enable @PreAuthorize, @PostAuthorize, @Secured
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final TokenFilter tokenFilter;
     private final RateLimitFilter rateLimitFilter;
     private final CustomPermissionEvaluator permissionEvaluator;
+
+    @Value("${core.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+    private List<String> allowedOrigins;
 
     public SecurityConfig(
             TokenFilter tokenFilter,
@@ -48,60 +43,55 @@ public class SecurityConfig {
         this.permissionEvaluator = permissionEvaluator;
     }
 
-    /**
-     * Password encoder for hashing passwords.
-     * Uses BCrypt algorithm with default strength (10).
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(BCryptPasswordEncoder.BCryptVersion.$2A, 12);
     }
 
-    /**
-     * Register CustomPermissionEvaluator for hasPermission() expressions.
-     * This enables @PreAuthorize("hasPermission(null, 'USER:READ')") to work.
-     */
     @Bean
     public MethodSecurityExpressionHandler methodSecurityExpressionHandler() {
-        DefaultMethodSecurityExpressionHandler expressionHandler = 
+        DefaultMethodSecurityExpressionHandler expressionHandler =
             new DefaultMethodSecurityExpressionHandler();
         expressionHandler.setPermissionEvaluator(permissionEvaluator);
         return expressionHandler;
     }
 
-    /**
-     * Security filter chain configuration.
-     * 
-     * Features:
-     * - CSRF disabled (stateless API)
-     * - Stateless session management
-     * - Token-based authentication via TokenFilter
-     * - Public endpoints for health checks, docs, and authentication
-     * - All other endpoints require authentication
-     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration cfg = new CorsConfiguration();
+        cfg.setAllowedOrigins(allowedOrigins);
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-API-Key", "X-Tenant-Id"));
+        cfg.setAllowCredentials(true);
+        cfg.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", cfg);
+        return source;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Disable CSRF for stateless API
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
-            
-            // Stateless session - don't create HTTP sessions
-            .sessionManagement(session -> 
+            .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            
-            // Authorization rules
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints - no authentication required
                 .requestMatchers(
-                    "/actuator/health",           // Health check
+                    "/actuator/health",
                     "/actuator/health/**",
-                    "/api-docs/**",               // OpenAPI docs
-                    "/swagger-ui/**",             // Swagger UI
+                    "/actuator/prometheus",
+                    "/api-docs/**",
+                    "/swagger-ui/**",
                     "/swagger-ui.html",
-                    "/v3/api-docs/**"             // OpenAPI v3 docs
+                    "/v3/api-docs/**"
                 ).permitAll()
 
-                // Authentication & session endpoints - public (protected by API key in TokenFilter)
+                // CORS preflight
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+                // Public endpoints (still gated by X-API-Key in TokenFilter)
                 .requestMatchers(
                     "/api/v1/users/login",
                     "/api/v1/users/login-encrypt",
@@ -115,18 +105,13 @@ public class SecurityConfig {
                     "/api/v1/oauth2/callback/**"
                 ).permitAll()
 
-                // Avatar files served from disk (read-only)
                 .requestMatchers("/files/avatars/**").permitAll()
 
-                // All other endpoints require authentication
                 .anyRequest().authenticated()
             )
-            
-            // Add rate limit filter first, then token filter
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(tokenFilter, RateLimitFilter.class);
-        
+
         return http.build();
     }
 }
- 

@@ -8,6 +8,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import org.hibernate.annotations.Filter;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -31,12 +33,16 @@ import lombok.Setter;
 @Entity
 @Table(name = "roles", schema = "sample_app")
 @EntityListeners(AuditingEntityListener.class)
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String roleId;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
+
+    @Column(nullable = false, length = 50)
     private String name;
 
     @Column(length = 255)
