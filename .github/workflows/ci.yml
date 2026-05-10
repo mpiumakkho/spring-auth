@@ -38,15 +38,12 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Make mvnw executable
-        run: chmod +x ./mvnw
-
       - name: Build & test (with PostgreSQL)
         env:
           DB_URL: jdbc:postgresql://localhost:5432/postgres
           DB_USERNAME: postgres
           DB_PASSWORD: postgres
-        run: ./mvnw -B verify
+        run: bash ./mvnw -B verify
 
       - name: Upload core-api jar
         if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
@@ -72,11 +69,8 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Make mvnw executable
-        run: chmod +x ./mvnw
-
       - name: Build & test
-        run: ./mvnw -B verify
+        run: bash ./mvnw -B verify
 
       - name: Upload web-api jar
         if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
