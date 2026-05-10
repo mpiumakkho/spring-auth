@@ -1,0 +1,872 @@
+{
+  "info": {
+    "_postman_id": "6322a47b-19eb-4fb4-9e1e-5132f4e8ff03",
+    "name": "UMS Core API - Full Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "28607485",
+    "_collection_link": "https://bold-meteor-575367.postman.co/workspace/DE-CONTRACT~c6c97753-d7e4-4c86-881a-369ca2ca78e4/collection/28607485-6322a47b-19eb-4fb4-9e1e-5132f4e8ff03?action=share&source=collection_link&creator=28607485"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "auth": { "type": "noauth" },
+      "item": [
+        {
+          "name": "Login (username or email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let token;",
+                  "try { const json = pm.response.json(); token = json && json.user && json.user.token; } catch (e) {}",
+                  "if (token) { pm.collectionVariables.set('token', token); }"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Login (roles encrypted) [optional]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/login-encrypt",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "login-encrypt"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "auth": { "type": "noauth" },
+      "item": [
+        {
+          "name": "Validate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "validate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Keep Alive",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/keep-alive",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "keep-alive"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password\",\n  \"email\": \"admin@example.com\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"User\",\n  \"status\": \"active\",\n  \"createdBy\": \"seed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "create"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"admin\",\n  \"password\": \"password\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"User\",\n  \"updatedBy\": \"seed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "update"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/delete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "delete"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User (DELETE /{id})",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find User by Id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/find-by-id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "find-by-id"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find User by Username",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/find-by-username",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "find-by-username"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find by Username or Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/find-by-username-or-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "find-by-username-or-email"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find User (by userId or username)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/find",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "find"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Role to User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"roleId\": \"{{roleId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/assign-role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "assign-role"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Role from User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"roleId\": \"{{roleId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/remove-role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "remove-role"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"status\": \"{{status}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/update-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "update-status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin - Activate User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/admin/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "admin", "activate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin - Deactivate User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/admin/deactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "admin", "deactivate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin - List Pending Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/admin/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "admin", "pending"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin - Users by Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"pending\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/admin/users-by-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "admin", "users-by-status"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "List Roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ADMIN\",\n  \"description\": \"Administrator\",\n  \"createdBy\": \"seed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "create"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"{{roleId}}\",\n  \"name\": \"ADMIN\",\n  \"description\": \"Updated\",\n  \"updatedBy\": \"seed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "update"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"{{roleId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/delete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "delete"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find Role by Id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"{{roleId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/find-by-id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "find-by-id"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find Role by Name",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/find-by-name",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "find-by-name"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Permission to Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"{{roleId}}\",\n  \"permissionId\": \"{{permissionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/assign-permission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "assign-permission"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Permission from Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"{{roleId}}\",\n  \"permissionId\": \"{{permissionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/remove-permission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "remove-permission"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role Permissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"{{roleId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/get-permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "get-permissions"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Permissions",
+      "item": [
+        {
+          "name": "List Permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"USERS_READ\",\n  \"resource\": \"users\",\n  \"action\": \"read\",\n  \"description\": \"Read users\",\n  \"createdBy\": \"seed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "create"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionId\": \"{{permissionId}}\",\n  \"name\": \"USERS_READ\",\n  \"resource\": \"users\",\n  \"action\": \"read\",\n  \"description\": \"Updated\",\n  \"updatedBy\": \"seed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "update"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionId\": \"{{permissionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/delete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "delete"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find Permission by Id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionId\": \"{{permissionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/find-by-id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "find-by-id"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find Permission by Name",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"USERS_READ\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/find-by-name",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "find-by-name"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find by Resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resource\": \"users\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/find-by-resource",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "find-by-resource"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find by Resource and Action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resource\": \"users\",\n  \"action\": \"read\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/find-by-resource-and-action",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "find-by-resource-and-action"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8091"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "roleId",
+      "value": ""
+    },
+    {
+      "key": "permissionId",
+      "value": ""
+    },
+    {
+      "key": "status",
+      "value": "active"
+    }
+  ]
+}
