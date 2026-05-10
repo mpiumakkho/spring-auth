@@ -1,5 +1,7 @@
-const API_BASE = import.meta.env.VITE_API_BASE ?? "/api/v1";
-const API_KEY = import.meta.env.VITE_API_KEY ?? "changeme-dev-api-key-2024";
+// All API calls go through the BFF (`/bff`). Auth state lives in httpOnly cookies
+// set by /bff/auth/login — the SPA never sees the JWT or the API key.
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/bff/api/v1";
+const AUTH_BASE = "/bff/auth";
 
 export class ApiError extends Error {
   status: number;
@@ -11,21 +13,42 @@ export class ApiError extends Error {
   }
 }
 
-function authHeader(): Record<string, string> {
-  const token = localStorage.getItem("rbac.token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function refreshOnce(): Promise<boolean> {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    try {
+      const res = await fetch(`${AUTH_BASE}/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
+      return res.ok;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+  return refreshInFlight;
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}, retried = false): Promise<T> {
   const headers: Record<string, string> = {
-    "X-API-Key": API_KEY,
     ...((init.headers as Record<string, string>) ?? {}),
-    ...authHeader(),
   };
   if (init.body && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers,
+    credentials: "include",
+  });
+
+  if (res.status === 401 && !retried) {
+    const refreshed = await refreshOnce();
+    if (refreshed) return request(path, init, true);
+  }
+
   const text = await res.text();
   const body = text ? safeParse(text) : null;
   if (!res.ok) {
@@ -42,13 +65,31 @@ function safeParse(text: string) {
   try { return JSON.parse(text); } catch { return text; }
 }
 
-export const api = {
-  login(username: string, password: string) {
-    return request<LoginResponse>("/users/login", {
+export const auth = {
+  async login(username: string, password: string) {
+    const res = await fetch(`${AUTH_BASE}/login`, {
       method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
+    const text = await res.text();
+    const body = text ? safeParse(text) : null;
+    if (!res.ok) {
+      const message =
+        (body && typeof body === "object" && "message" in body
+          ? String((body as { message: unknown }).message)
+          : null) ?? "Login failed";
+      throw new ApiError(res.status, message, body);
+    }
+    return body as { user: BffUser };
   },
+  async logout() {
+    await fetch(`${AUTH_BASE}/logout`, { method: "POST", credentials: "include" });
+  },
+};
+
+export const api = {
   me() {
     return request<UserDto>("/users/me");
   },
@@ -60,19 +101,14 @@ export const api = {
   },
 };
 
-export interface LoginResponse {
-  success: boolean;
-  user: {
-    userId: string;
-    username: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-    status: string;
-    roles: { roleId: string; name: string }[];
-    token: string;
-    refreshToken?: string;
-  };
+export interface BffUser {
+  userId: string;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  status: string;
+  roles?: { roleId: string; name: string }[];
 }
 
 export interface UserDto {

@@ -1,11 +1,13 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { authStorage } from "../auth";
+import { auth } from "../api/client";
 
 export default function Layout() {
   const navigate = useNavigate();
   const username = authStorage.getUsername();
 
-  const logout = () => {
+  const logout = async () => {
+    await auth.logout();
     authStorage.clear();
     navigate("/login");
   };

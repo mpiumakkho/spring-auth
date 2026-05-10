@@ -5,10 +5,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // Proxy /bff/** to the web-api BFF (which forwards to core-api).
+    // Frontend NEVER hits core-api directly — the BFF holds the API key
+    // and translates the JWT cookie into Authorization headers.
     proxy: {
-      "/api": {
-        target: "http://localhost:8091",
+      "/bff": {
+        target: "http://localhost:8081",
         changeOrigin: true,
+        // web-api context-path is /ums, so /bff/x -> /ums/bff/x upstream
+        rewrite: (path) => `/ums${path}`,
       },
     },
   },

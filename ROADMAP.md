@@ -206,7 +206,7 @@
 
 | | |
 |---|---|
-| **Status** | `[~]` In Progress (BYO-identity exchange shipped; full Spring OAuth2 client config requires provider creds) |
+| **Status** | `[x]` Done (Spring OAuth2 Login chain wired with conditional activation; success handler bridges provider userinfo to internal user + JWT; BYO-identity exchange retained as alt path; provider creds injected at deploy time) |
 | **Complexity** | High |
 | **Depends on** | 2.1 JWT Token |
 
@@ -421,7 +421,7 @@
 
 | | |
 |---|---|
-| **Status** | `[~]` In Progress (Vite + React + TS SPA scaffolded with login/dashboard/users/tenants pages; Thymeleaf web-api still parallel until SPA reaches feature parity) |
+| **Status** | `[~]` In Progress (Vite + React + TS SPA running through web-api as a BFF — httpOnly cookie auth, X-API-Key never leaves the BFF, auto-refresh on 401. Thymeleaf MVC still parallel as a second filter chain until SPA reaches feature parity) |
 | **Complexity** | High |
 | **Depends on** | 2.6 API Versioning, 3.1 Caching |
 

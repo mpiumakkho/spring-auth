@@ -1,26 +1,21 @@
+// Auth state is server-managed via httpOnly cookies. The SPA only caches the
+// public profile fields (username) for UI display. The presence of
+// "rbac.username" in localStorage means "the user authenticated at least once
+// in this browser" — actual auth is enforced by the cookie + BFF.
+
+const KEY = "rbac.username";
+
 export const authStorage = {
-  setToken(token: string) {
-    localStorage.setItem("rbac.token", token);
-  },
-  getToken(): string | null {
-    return localStorage.getItem("rbac.token");
-  },
-  setRefreshToken(token: string | undefined) {
-    if (token) localStorage.setItem("rbac.refreshToken", token);
-    else localStorage.removeItem("rbac.refreshToken");
-  },
   setUsername(username: string) {
-    localStorage.setItem("rbac.username", username);
+    localStorage.setItem(KEY, username);
   },
   getUsername(): string | null {
-    return localStorage.getItem("rbac.username");
+    return localStorage.getItem(KEY);
   },
   clear() {
-    localStorage.removeItem("rbac.token");
-    localStorage.removeItem("rbac.refreshToken");
-    localStorage.removeItem("rbac.username");
+    localStorage.removeItem(KEY);
   },
   isAuthenticated(): boolean {
-    return Boolean(localStorage.getItem("rbac.token"));
+    return Boolean(localStorage.getItem(KEY));
   },
 };

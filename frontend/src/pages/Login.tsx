@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ApiError, api } from "../api/client";
+import { ApiError, auth } from "../api/client";
 import { authStorage } from "../auth";
 
 export default function Login() {
@@ -15,9 +15,7 @@ export default function Login() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await api.login(username, password);
-      authStorage.setToken(res.user.token);
-      authStorage.setRefreshToken(res.user.refreshToken);
+      const res = await auth.login(username, password);
       authStorage.setUsername(res.user.username);
       navigate("/", { replace: true });
     } catch (err) {
