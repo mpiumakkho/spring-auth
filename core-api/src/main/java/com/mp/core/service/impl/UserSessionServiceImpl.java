@@ -12,38 +12,68 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mp.core.entity.RefreshToken;
 import com.mp.core.entity.UserSession;
 import com.mp.core.repository.UserSessionRepository;
+import com.mp.core.service.RefreshTokenService;
 import com.mp.core.service.UserSessionService;
 
 @Slf4j
 @Service
-public class UserSessionServiceImpl implements UserSessionService {    
+public class UserSessionServiceImpl implements UserSessionService {
+
     @Value("${core.session.timeout-minutes:30}")
     private long sessionTimeoutMinutes;
-    
+
     private final UserSessionRepository sessionRepo;
-    
-    public UserSessionServiceImpl(UserSessionRepository sessionRepo) {
+    private final RefreshTokenService refreshTokenService;
+
+    public UserSessionServiceImpl(UserSessionRepository sessionRepo, RefreshTokenService refreshTokenService) {
         this.sessionRepo = sessionRepo;
+        this.refreshTokenService = refreshTokenService;
     }
-    
+
     @Override
     @Transactional
     public UserSession createSession(String userId) {
-        // invalidate any existing sessions
         invalidateUserSessions(userId);
-        
-        // create new session
+        refreshTokenService.revokeAllForUser(userId);
+
+        RefreshToken refresh = refreshTokenService.issue(userId);
+
         UserSession session = new UserSession();
         session.setUserId(userId);
         session.setToken(UUID.randomUUID().toString());
         session.setStatus("active");
-        
+        session.setRefreshTokenId(refresh.getRefreshId());
+
         log.info("creating new session for user: {}", userId);
-        return sessionRepo.save(session);
+        UserSession saved = sessionRepo.save(session);
+        saved.setRefreshToken(refresh.getToken());
+        return saved;
     }
-    
+
+    @Override
+    @Transactional
+    public UserSession refreshSession(String refreshToken) {
+        RefreshToken stored = refreshTokenService.validate(refreshToken);
+        String userId = stored.getUserId();
+
+        // Issue a fresh access-token session, but keep the refresh token alive for its full TTL
+        invalidateUserSessions(userId);
+
+        UserSession session = new UserSession();
+        session.setUserId(userId);
+        session.setToken(UUID.randomUUID().toString());
+        session.setStatus("active");
+        session.setRefreshTokenId(stored.getRefreshId());
+
+        UserSession saved = sessionRepo.save(session);
+        saved.setRefreshToken(stored.getToken());
+        log.info("refreshed access token for user: {}", userId);
+        return saved;
+    }
+
     @Override
     @Transactional
     public void updateActivity(String token) {
@@ -53,17 +83,21 @@ public class UserSessionServiceImpl implements UserSessionService {
             log.debug("updated activity timestamp for session: {}", session.getSessionId());
         });
     }
-    
+
     @Override
     @Transactional
     public void invalidateSession(String token) {
         sessionRepo.findByToken(token).ifPresent(session -> {
             session.setStatus("inactive");
             sessionRepo.save(session);
+            if (session.getRefreshTokenId() != null) {
+                // Revoke the linked refresh token too
+                refreshTokenService.revokeAllForUser(session.getUserId());
+            }
             log.info("invalidated session: {}", session.getSessionId());
         });
     }
-    
+
     @Override
     @Transactional
     public void invalidateUserSessions(String userId) {
@@ -76,7 +110,7 @@ public class UserSessionServiceImpl implements UserSessionService {
             log.info("invalidated {} sessions for user: {}", sessions.size(), userId);
         }
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public boolean isSessionValid(String token) {
@@ -85,20 +119,19 @@ public class UserSessionServiceImpl implements UserSessionService {
                 if (!"active".equals(session.getStatus())) {
                     return false;
                 }
-                
                 Date threshold = getTimeoutThreshold();
-                return session.getLastActivityAt().after(threshold);
+                return session.getLastActivityAt() != null && session.getLastActivityAt().after(threshold);
             })
             .orElse(false);
     }
-    
+
     @Override
     @Scheduled(fixedRateString = "${core.session.cleanup-interval:300000}")
     @Transactional
     public void cleanupInactiveSessions() {
         Date threshold = getTimeoutThreshold();
         List<UserSession> inactiveSessions = sessionRepo.findInactiveSessions(threshold);
-        
+
         if (!inactiveSessions.isEmpty()) {
             inactiveSessions.forEach(session -> {
                 session.setStatus("inactive");
@@ -107,10 +140,10 @@ public class UserSessionServiceImpl implements UserSessionService {
             log.info("cleaned up {} inactive sessions", inactiveSessions.size());
         }
     }
-    
+
     private Date getTimeoutThreshold() {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.MINUTE, -((int) sessionTimeoutMinutes));
         return cal.getTime();
     }
-} 
+}

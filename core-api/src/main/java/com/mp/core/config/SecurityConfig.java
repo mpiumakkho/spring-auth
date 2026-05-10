@@ -103,12 +103,20 @@ public class SecurityConfig {
 
                 // Authentication & session endpoints - public (protected by API key in TokenFilter)
                 .requestMatchers(
-                    "/api/users/login",
-                    "/api/users/login-encrypt",
-                    "/api/sessions/validate",
-                    "/api/sessions/keep-alive",
-                    "/api/sessions/logout"
+                    "/api/v1/users/login",
+                    "/api/v1/users/login-encrypt",
+                    "/api/v1/sessions/validate",
+                    "/api/v1/sessions/keep-alive",
+                    "/api/v1/sessions/logout",
+                    "/api/v1/sessions/refresh",
+                    "/api/v1/account/verify-email",
+                    "/api/v1/account/forgot-password",
+                    "/api/v1/account/reset-password",
+                    "/api/v1/oauth2/callback/**"
                 ).permitAll()
+
+                // Avatar files served from disk (read-only)
+                .requestMatchers("/files/avatars/**").permitAll()
 
                 // All other endpoints require authentication
                 .anyRequest().authenticated()

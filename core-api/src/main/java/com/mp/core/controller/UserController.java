@@ -40,6 +40,8 @@ import com.mp.core.entity.User;
 import com.mp.core.entity.UserSession;
 import com.mp.core.exception.BusinessValidationException;
 import com.mp.core.exception.ResourceNotFoundException;
+import com.mp.core.security.JwtService;
+import com.mp.core.service.AccountRecoveryService;
 import com.mp.core.service.UserService;
 import com.mp.core.service.UserSessionService;
 import com.mp.core.util.RoleEncryptor;
@@ -48,22 +50,28 @@ import jakarta.validation.Valid;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
     private final UserService userService;
     private final PasswordEncoder pwdEncoder;
     private final UserSessionService sessionService;
     private final RoleEncryptor roleEncryptor;
+    private final JwtService jwtService;
+    private final AccountRecoveryService recoveryService;
 
     public UserController(
             UserService userService,
             PasswordEncoder pwdEncoder,
             UserSessionService sessionService,
-            RoleEncryptor roleEncryptor) {
+            RoleEncryptor roleEncryptor,
+            JwtService jwtService,
+            AccountRecoveryService recoveryService) {
         this.userService = userService;
         this.pwdEncoder = pwdEncoder;
         this.sessionService = sessionService;
         this.roleEncryptor = roleEncryptor;
+        this.jwtService = jwtService;
+        this.recoveryService = recoveryService;
     }
 
     @GetMapping
@@ -137,6 +145,7 @@ public class UserController {
         newUser.setFirstName(request.firstName());
         newUser.setLastName(request.lastName());
         User created = userService.createUser(newUser);
+        recoveryService.issueEmailVerification(created.getUserId());
         log.info("User created: {} (id={})", created.getUsername(), created.getUserId());
         return ResponseEntity.ok(UserMapper.toUserResponseDTO(created));
     }
@@ -220,7 +229,7 @@ public class UserController {
 
     @PostMapping("/find")
     @PreAuthorize("hasPermission(null, 'USER:READ') or hasRole('ADMIN')")
-    public ResponseEntity<User> findUser(@RequestBody FindUserRequestDTO request) {
+    public ResponseEntity<User> findUser(@Valid @RequestBody FindUserRequestDTO request) {
         String userId = request.userId();
         String username = request.username();
 
@@ -240,44 +249,46 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequestDTO request) {
-        String identifier = request.username();
-        Optional<User> userOpt = userService.getUserByUsername(identifier)
-                .or(() -> userService.getUserByEmail(identifier));
+    public ResponseEntity<String> login(@Valid @RequestBody LoginRequestDTO request, jakarta.servlet.http.HttpServletRequest http) {
+        User user = userService.authenticate(request.username(), request.password(), http.getRemoteAddr());
+        UserSession session = sessionService.createSession(user.getUserId());
+        String jwt = jwtService.generate(user);
 
-        if (userOpt.isPresent() && pwdEncoder.matches(request.password(), userOpt.get().getPassword())) {
-            User user = userOpt.get();
-            UserSession session = sessionService.createSession(user.getUserId());
-
-            JSONObject userJson = new JSONObject();
-            userJson.put("userId", user.getUserId());
-            userJson.put("username", user.getUsername());
-            userJson.put("email", user.getEmail());
-            userJson.put("firstName", user.getFirstName());
-            userJson.put("lastName", user.getLastName());
-            userJson.put("status", user.getStatus());
-            List<JSONObject> loginRoles = new ArrayList<>();
-            if (user.getRoles() != null) {
-                for (Role role : user.getRoles()) {
-                    JSONObject r = new JSONObject();
-                    r.put("roleId", role.getRoleId());
-                    r.put("name", role.getName());
-                    loginRoles.add(r);
-                }
+        JSONObject userJson = new JSONObject();
+        userJson.put("userId", user.getUserId());
+        userJson.put("username", user.getUsername());
+        userJson.put("email", user.getEmail());
+        userJson.put("firstName", user.getFirstName());
+        userJson.put("lastName", user.getLastName());
+        userJson.put("status", user.getStatus());
+        List<JSONObject> loginRoles = new ArrayList<>();
+        if (user.getRoles() != null) {
+            for (Role role : user.getRoles()) {
+                JSONObject r = new JSONObject();
+                r.put("roleId", role.getRoleId());
+                r.put("name", role.getName());
+                loginRoles.add(r);
             }
-            userJson.put("roles", loginRoles);
-            userJson.put("token", session.getToken());
-
-            JSONObject result = new JSONObject();
-            result.put("success", true);
-            result.put("user", userJson);
-            return ResponseEntity.ok(result.toString());
         }
+        userJson.put("roles", loginRoles);
+        userJson.put("token", jwt);
+        userJson.put("refreshToken", session.getRefreshToken());
 
-        JSONObject fail = new JSONObject();
-        fail.put("success", false);
-        fail.put("message", "Invalid username or password");
-        return ResponseEntity.status(401).body(fail.toString());
+        JSONObject result = new JSONObject();
+        result.put("success", true);
+        result.put("user", userJson);
+        return ResponseEntity.ok(result.toString());
+    }
+
+    @PostMapping("/admin/unlock")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<UserResponseDTO> unlockAccount(
+            @Valid @RequestBody UserIdRequestDTO request,
+            org.springframework.security.core.Authentication auth) {
+        String actor = auth != null ? String.valueOf(auth.getPrincipal()) : null;
+        User unlocked = userService.unlockAccount(request.userId(), actor);
+        log.info("User {} unlocked by {}", request.userId(), actor);
+        return ResponseEntity.ok(UserMapper.toUserResponseDTO(unlocked));
     }
 
     @PostMapping("/login-encrypt")

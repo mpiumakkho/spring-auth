@@ -1,9 +1,11 @@
 package com.mp.core.service;
 
-import java.util.List;
+import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,28 +30,16 @@ public class AuditService {
             AuditLog entry = new AuditLog(actor, action, targetType, targetId, detail);
             auditRepo.save(entry);
         } catch (Exception e) {
-            // Audit failure should never break business logic
+            // Audit failure must never break the main business flow
             log.error("Failed to write audit log: {}", e.getMessage());
         }
     }
 
     @Transactional(readOnly = true)
-    public List<AuditLog> getRecentLogs() {
-        return auditRepo.findTop100ByOrderByCreatedAtDesc();
-    }
-
-    @Transactional(readOnly = true)
-    public List<AuditLog> getLogsByActor(String actor) {
-        return auditRepo.findByActorOrderByCreatedAtDesc(actor);
-    }
-
-    @Transactional(readOnly = true)
-    public List<AuditLog> getLogsByAction(String action) {
-        return auditRepo.findByActionOrderByCreatedAtDesc(action);
-    }
-
-    @Transactional(readOnly = true)
-    public List<AuditLog> getLogsByTargetType(String targetType) {
-        return auditRepo.findByTargetTypeOrderByCreatedAtDesc(targetType);
+    public Page<AuditLog> search(String actor, String action, String targetType, Date from, Date to, Pageable pageable) {
+        String a = (actor != null && !actor.isBlank()) ? actor : null;
+        String act = (action != null && !action.isBlank()) ? action : null;
+        String t = (targetType != null && !targetType.isBlank()) ? targetType : null;
+        return auditRepo.search(a, act, t, from, to, pageable);
     }
 }

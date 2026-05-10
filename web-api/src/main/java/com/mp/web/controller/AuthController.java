@@ -70,7 +70,7 @@ public class AuthController {
                 HttpEntity<Map<String, String>> entity = new HttpEntity<>(req, headers);
                 
                 try {
-                    restTemplate.postForEntity(coreApiUrl + "/api/sessions/logout", entity, String.class);
+                    restTemplate.postForEntity(coreApiUrl + "/api/v1/sessions/logout", entity, String.class);
                 } catch (Exception e) {
                     // log.warn("Error invalidating session in core-api: {}", e.getMessage());
                 }

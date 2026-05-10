@@ -32,7 +32,7 @@ import jakarta.validation.Valid;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/roles")
+@RequestMapping("/api/v1/roles")
 public class RoleController {
 
     private final RoleService roleService;

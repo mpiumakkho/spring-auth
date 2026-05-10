@@ -25,4 +25,18 @@ public interface UserService {
     List<User> getPendingUsers();
     List<User> getUsersByStatus(String status);
     Optional<User> getUserByEmail(String email);
-} 
+
+    /**
+     * Authenticate username/email + raw password, applying account-lockout policy.
+     * On success returns the user and resets failed attempts.
+     * On failure increments attempts and locks the account when the threshold is reached.
+     * @return the authenticated user, never null. Throws on invalid credentials, locked account, or inactive user.
+     */
+    User authenticate(String identifier, String rawPassword, String ipAddress);
+
+    User unlockAccount(String userId, String actor);
+
+    User updateProfile(String userId, String firstName, String lastName, String phone, String bio);
+
+    User updateAvatarUrl(String userId, String avatarUrl);
+}

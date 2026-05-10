@@ -1,6 +1,6 @@
 # rbac-ums Development Roadmap
 
-> Last updated: 2026-04-08
+> Last updated: 2026-05-10
 
 แผนพัฒนาต่อยอดระบบ User Management System (RBAC) แบ่งเป็น 3 phases
 
@@ -16,7 +16,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Medium |
 | **Depends on** | - |
 
@@ -45,7 +45,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Low |
 | **Depends on** | - |
 
@@ -73,7 +73,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Medium |
 | **Depends on** | - |
 
@@ -102,7 +102,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Medium |
 | **Depends on** | - |
 
@@ -130,7 +130,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Low-Medium |
 | **Depends on** | - |
 
@@ -161,7 +161,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Medium |
 | **Depends on** | 1.4 Refresh Token |
 
@@ -184,7 +184,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Medium |
 | **Depends on** | 1.3 Password Policy |
 
@@ -206,7 +206,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[~]` In Progress (BYO-identity exchange shipped; full Spring OAuth2 client config requires provider creds) |
 | **Complexity** | High |
 | **Depends on** | 2.1 JWT Token |
 
@@ -228,7 +228,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Low |
 | **Depends on** | - |
 
@@ -250,7 +250,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Medium |
 | **Depends on** | 1.1 Audit Log |
 
@@ -272,7 +272,7 @@
 
 | | |
 |---|---|
-| **Status** | `[ ]` Not Started |
+| **Status** | `[x]` Done |
 | **Complexity** | Low |
 | **Depends on** | - |
 

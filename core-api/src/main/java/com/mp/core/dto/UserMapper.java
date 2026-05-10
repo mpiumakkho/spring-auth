@@ -14,9 +14,12 @@ public class UserMapper {
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setStatus(user.getStatus());
+        dto.setAvatarUrl(user.getAvatarUrl());
+        dto.setPhone(user.getPhone());
+        dto.setBio(user.getBio());
         if (user.getRoles() != null) {
             dto.setRoles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()));
         }
         return dto;
     }
-} 
+}

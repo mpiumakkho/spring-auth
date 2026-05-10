@@ -53,7 +53,7 @@ public class CoreApiAuthProvider implements AuthenticationProvider {
 
         try {
             ResponseEntity<Map<String, Object>> respEntity = restTemplate.exchange(
-                    coreApiUrl + "/api/users/login",
+                    coreApiUrl + "/api/v1/users/login",
                     org.springframework.http.HttpMethod.POST,
                     entity,
                     new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {}

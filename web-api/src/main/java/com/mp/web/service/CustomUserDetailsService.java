@@ -30,7 +30,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Map<String, String> req = new HashMap<>();
         req.put("username", username);
-        Map user = restTemplate.postForObject(coreApiUrl + "/api/users/find-by-username-or-email", req, Map.class);
+        Map user = restTemplate.postForObject(coreApiUrl + "/api/v1/users/find-by-username-or-email", req, Map.class);
 
         // log response จาก core-api
         System.out.println("[DEBUG] core-api user response: " + user);

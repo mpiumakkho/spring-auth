@@ -41,7 +41,7 @@ public class UserController {
     @PostMapping("/find-by-id")
     public ResponseEntity<?> getUserById(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.postForEntity(coreApiServer + "/api/users/find-by-id", 
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/users/find-by-id", 
                 "{\"userId\":\"" + request.get("userId") + "\"}", Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
@@ -52,7 +52,7 @@ public class UserController {
     @PostMapping("/find-by-username")
     public ResponseEntity<?> getUserByUsername(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.postForEntity(coreApiServer + "/api/users/find-by-username", 
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/users/find-by-username", 
                 "{\"username\":\"" + request.get("username") + "\"}", Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
@@ -63,7 +63,7 @@ public class UserController {
     @GetMapping
     public ResponseEntity<?> getAllUsers(HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.getForEntity(coreApiServer + "/api/users", Object.class);
+            return restTemplate.getForEntity(coreApiServer + "/api/v1/users", Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -73,7 +73,7 @@ public class UserController {
     @PostMapping("/create")
     public ResponseEntity<?> createUser(@RequestBody User user, HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.postForEntity(coreApiServer + "/api/users/create", user, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/users/create", user, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -83,7 +83,7 @@ public class UserController {
     @PutMapping("/update")
     public ResponseEntity<?> updateUser(@RequestBody User user, HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.exchange(coreApiServer + "/api/users/update", org.springframework.http.HttpMethod.PUT, 
+            return restTemplate.exchange(coreApiServer + "/api/v1/users/update", org.springframework.http.HttpMethod.PUT, 
                 new org.springframework.http.HttpEntity<>(user), Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
@@ -94,7 +94,7 @@ public class UserController {
     @PostMapping("/delete")
     public ResponseEntity<?> deleteUser(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.postForEntity(coreApiServer + "/api/users/delete", 
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/users/delete", 
                 "{\"userId\":\"" + request.get("userId") + "\"}", Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
@@ -106,7 +106,7 @@ public class UserController {
     public ResponseEntity<?> assignRoleToUser(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"userId\":\"" + request.get("userId") + "\",\"roleId\":\"" + request.get("roleId") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/users/assign-role", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/users/assign-role", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -117,7 +117,7 @@ public class UserController {
     public ResponseEntity<?> removeRoleFromUser(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"userId\":\"" + request.get("userId") + "\",\"roleId\":\"" + request.get("roleId") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/users/remove-role", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/users/remove-role", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -128,7 +128,7 @@ public class UserController {
     public ResponseEntity<?> updateUserStatus(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"userId\":\"" + request.get("userId") + "\",\"status\":\"" + request.get("status") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/users/update-status", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/users/update-status", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -140,7 +140,7 @@ public class UserController {
     @GetMapping("/roles")
     public ResponseEntity<?> getAllRoles(HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.getForEntity(coreApiServer + "/api/roles", Object.class);
+            return restTemplate.getForEntity(coreApiServer + "/api/v1/roles", Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -151,7 +151,7 @@ public class UserController {
     public ResponseEntity<?> getRoleById(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"roleId\":\"" + request.get("roleId") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/roles/find-by-id", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/roles/find-by-id", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -162,7 +162,7 @@ public class UserController {
     public ResponseEntity<?> getRoleByName(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"name\":\"" + request.get("name") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/roles/find-by-name", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/roles/find-by-name", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -172,7 +172,7 @@ public class UserController {
     @PostMapping("/roles/create")
     public ResponseEntity<?> createRole(@RequestBody Object role, HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.postForEntity(coreApiServer + "/api/roles/create", role, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/roles/create", role, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -182,7 +182,7 @@ public class UserController {
     @PutMapping("/roles/update")
     public ResponseEntity<?> updateRole(@RequestBody Object role, HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.exchange(coreApiServer + "/api/roles/update", org.springframework.http.HttpMethod.PUT,
+            return restTemplate.exchange(coreApiServer + "/api/v1/roles/update", org.springframework.http.HttpMethod.PUT,
                 new org.springframework.http.HttpEntity<>(role), Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
@@ -194,7 +194,7 @@ public class UserController {
     public ResponseEntity<?> deleteRole(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"roleId\":\"" + request.get("roleId") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/roles/delete", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/roles/delete", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -205,7 +205,7 @@ public class UserController {
     public ResponseEntity<?> assignPermissionToRole(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"roleId\":\"" + request.get("roleId") + "\",\"permissionId\":\"" + request.get("permissionId") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/roles/assign-permission", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/roles/assign-permission", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -216,7 +216,7 @@ public class UserController {
     public ResponseEntity<?> removePermissionFromRole(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"roleId\":\"" + request.get("roleId") + "\",\"permissionId\":\"" + request.get("permissionId") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/roles/remove-permission", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/roles/remove-permission", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -227,7 +227,7 @@ public class UserController {
     public ResponseEntity<?> getRolePermissions(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"roleId\":\"" + request.get("roleId") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/roles/get-permissions", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/roles/get-permissions", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -239,7 +239,7 @@ public class UserController {
     @GetMapping("/permissions")
     public ResponseEntity<?> getAllPermissions(HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.getForEntity(coreApiServer + "/api/permissions", Object.class);
+            return restTemplate.getForEntity(coreApiServer + "/api/v1/permissions", Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -250,7 +250,7 @@ public class UserController {
     public ResponseEntity<?> getPermissionById(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"permissionId\":\"" + request.get("permissionId") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/permissions/find-by-id", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/permissions/find-by-id", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -261,7 +261,7 @@ public class UserController {
     public ResponseEntity<?> getPermissionByName(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"name\":\"" + request.get("name") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/permissions/find-by-name", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/permissions/find-by-name", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -272,7 +272,7 @@ public class UserController {
     public ResponseEntity<?> getPermissionsByResource(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"resource\":\"" + request.get("resource") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/permissions/find-by-resource", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/permissions/find-by-resource", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -283,7 +283,7 @@ public class UserController {
     public ResponseEntity<?> getPermissionsByResourceAndAction(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"resource\":\"" + request.get("resource") + "\",\"action\":\"" + request.get("action") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/permissions/find-by-resource-and-action", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/permissions/find-by-resource-and-action", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -293,7 +293,7 @@ public class UserController {
     @PostMapping("/permissions/create")
     public ResponseEntity<?> createPermission(@RequestBody Object permission, HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.postForEntity(coreApiServer + "/api/permissions/create", permission, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/permissions/create", permission, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -303,7 +303,7 @@ public class UserController {
     @PutMapping("/permissions/update")
     public ResponseEntity<?> updatePermission(@RequestBody Object permission, HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.exchange(coreApiServer + "/api/permissions/update", org.springframework.http.HttpMethod.PUT,
+            return restTemplate.exchange(coreApiServer + "/api/v1/permissions/update", org.springframework.http.HttpMethod.PUT,
                 new org.springframework.http.HttpEntity<>(permission), Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
@@ -315,7 +315,7 @@ public class UserController {
     public ResponseEntity<?> deletePermission(@RequestBody Map<String, String> request, HttpServletResponse response, HttpSession session) {
         try {
             String jsonBody = "{\"permissionId\":\"" + request.get("permissionId") + "\"}";
-            return restTemplate.postForEntity(coreApiServer + "/api/permissions/delete", jsonBody, Object.class);
+            return restTemplate.postForEntity(coreApiServer + "/api/v1/permissions/delete", jsonBody, Object.class);
         } catch (RestClientResponseException e) {
             // log.error("Error calling core-api: " + e.getMessage());
             return ResponseEntity.status(e.getStatusCode()).body("Core API Error: " + e.getMessage());
@@ -326,7 +326,7 @@ public class UserController {
     @GetMapping("/health")
     public ResponseEntity<?> health(HttpServletResponse response, HttpSession session) {
         try {
-            return restTemplate.getForEntity(coreApiServer + "/api/health", String.class);
+            return restTemplate.getForEntity(coreApiServer + "/api/v1/health", String.class);
         } catch (RestClientResponseException e) {
             // log.error("Core API not available: " + e.getMessage());
             return ResponseEntity.ok("Web API: OK, Core API: DOWN");

@@ -33,7 +33,7 @@ public class UserWebService {
     public List<Map<String, Object>> getAllUsers() {
         try {
             ResponseEntity<List> response = restTemplate.getForEntity(
-                coreApiUrl + "/api/users",
+                coreApiUrl + "/api/v1/users",
                 List.class
             );
             return response.getBody();
@@ -55,7 +55,7 @@ public class UserWebService {
     public Map<String, Object> getUserById(String userId) {
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity(
-                coreApiUrl + "/api/users/" + userId,
+                coreApiUrl + "/api/v1/users/" + userId,
                 Map.class
             );
             return response.getBody();
@@ -89,7 +89,7 @@ public class UserWebService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(userForm, headers);
             
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                coreApiUrl + "/api/users",
+                coreApiUrl + "/api/v1/users",
                 request,
                 Map.class
             );
@@ -159,7 +159,7 @@ public class UserWebService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(userForm, headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
-                coreApiUrl + "/api/users/" + userId,
+                coreApiUrl + "/api/v1/users/" + userId,
                 HttpMethod.PUT,
                 request,
                 Map.class
@@ -217,7 +217,7 @@ public class UserWebService {
      */
     public void deleteUser(String userId) {
         try {
-            restTemplate.delete(coreApiUrl + "/api/users/" + userId);
+            restTemplate.delete(coreApiUrl + "/api/v1/users/" + userId);
             log.info("User {} deleted successfully", userId);
             
         } catch (HttpClientErrorException.NotFound ex) {
@@ -269,7 +269,7 @@ public class UserWebService {
      */
     public void activateUser(String userId) {
         try {
-            restTemplate.put(coreApiUrl + "/api/users/" + userId + "/activate", null);
+            restTemplate.put(coreApiUrl + "/api/v1/users/" + userId + "/activate", null);
             log.info("User {} activated", userId);
             
         } catch (HttpClientErrorException.NotFound ex) {
@@ -295,7 +295,7 @@ public class UserWebService {
      */
     public void deactivateUser(String userId) {
         try {
-            restTemplate.put(coreApiUrl + "/api/users/" + userId + "/deactivate", null);
+            restTemplate.put(coreApiUrl + "/api/v1/users/" + userId + "/deactivate", null);
             log.info("User {} deactivated", userId);
             
         } catch (HttpClientErrorException.NotFound ex) {
@@ -328,7 +328,7 @@ public class UserWebService {
             HttpEntity<Map<String, String>> entity = new HttpEntity<>(request, headers);
             
             restTemplate.postForEntity(
-                coreApiUrl + "/api/users/" + userId + "/roles",
+                coreApiUrl + "/api/v1/users/" + userId + "/roles",
                 entity,
                 Void.class
             );
@@ -359,7 +359,7 @@ public class UserWebService {
     public void removeRole(String userId, String roleId) {
         try {
             restTemplate.delete(
-                coreApiUrl + "/api/users/" + userId + "/roles/" + roleId
+                coreApiUrl + "/api/v1/users/" + userId + "/roles/" + roleId
             );
             
             log.info("Role {} removed from user {}", roleId, userId);

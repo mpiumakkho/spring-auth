@@ -32,7 +32,7 @@ import jakarta.validation.Valid;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/permissions")
+@RequestMapping("/api/v1/permissions")
 public class PermissionController {
 
     private final PermissionService permissionService;

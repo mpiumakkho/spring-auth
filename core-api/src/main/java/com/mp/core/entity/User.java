@@ -53,6 +53,20 @@ public class User {
     @Column(nullable = false, length = 20)
     private String status = UserStatus.INACTIVE;
 
+    @Column(nullable = false)
+    private int failedLoginAttempts = 0;
+
+    private Date lockedUntil;
+
+    @Column(length = 500)
+    private String avatarUrl;
+
+    @Column(length = 50)
+    private String phone;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
     @CreatedDate
     private Date createdAt;
     @LastModifiedDate

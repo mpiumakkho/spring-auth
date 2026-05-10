@@ -9,8 +9,11 @@ public class UserResponseDTO {
     private String firstName;
     private String lastName;
     private String status;
+    private String avatarUrl;
+    private String phone;
+    private String bio;
     private List<String> roles;
-    // getter/setter
+
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
     public String getUsername() { return username; }
@@ -23,6 +26,12 @@ public class UserResponseDTO {
     public void setLastName(String lastName) { this.lastName = lastName; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
     public List<String> getRoles() { return roles; }
     public void setRoles(List<String> roles) { this.roles = roles; }
-} 
+}

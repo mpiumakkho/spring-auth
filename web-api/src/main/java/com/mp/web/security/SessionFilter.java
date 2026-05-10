@@ -85,7 +85,7 @@ public class SessionFilter extends OncePerRequestFilter {
                 HttpEntity<Map<String, String>> entity = new HttpEntity<>(req, headers);
 
                 ResponseEntity<String> validateResponse = restTemplate.postForEntity(
-                    coreApiUrl + "/api/sessions/validate",
+                    coreApiUrl + "/api/v1/sessions/validate",
                     entity,
                     String.class
                 );
@@ -93,7 +93,7 @@ public class SessionFilter extends OncePerRequestFilter {
                 if (validateResponse.getStatusCode().is2xxSuccessful()) {
                     try {
                         restTemplate.postForEntity(
-                            coreApiUrl + "/api/sessions/keep-alive",
+                            coreApiUrl + "/api/v1/sessions/keep-alive",
                             entity,
                             String.class
                         );

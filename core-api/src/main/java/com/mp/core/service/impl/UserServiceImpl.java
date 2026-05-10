@@ -2,6 +2,8 @@ package com.mp.core.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,12 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mp.core.entity.Role;
 import com.mp.core.entity.User;
 import com.mp.core.entity.UserStatus;
+import com.mp.core.exception.AccountLockedException;
 import com.mp.core.exception.BusinessValidationException;
 import com.mp.core.exception.DuplicateResourceException;
+import com.mp.core.exception.InvalidCredentialsException;
 import com.mp.core.exception.ResourceNotFoundException;
 import com.mp.core.repository.RoleRepository;
 import com.mp.core.repository.UserRepository;
 import com.mp.core.service.AuditService;
+import com.mp.core.service.NotificationService;
 import com.mp.core.service.UserService;
 
 @Slf4j
@@ -29,18 +34,22 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepo;
     private final PasswordEncoder encoder;
     private final AuditService auditService;
+    private final NotificationService notificationService;
 
     private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final int LOCKOUT_MINUTES = 15;
 
     public UserServiceImpl(
             UserRepository userRepo,
             RoleRepository roleRepo,
             PasswordEncoder encoder,
-            AuditService auditService) {
+            AuditService auditService,
+            NotificationService notificationService) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
         this.encoder = encoder;
         this.auditService = auditService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -151,6 +160,9 @@ public class UserServiceImpl implements UserService {
         user.getRoles().add(role);
         userRepo.save(user);
         auditService.log(null, "ASSIGN_ROLE", "USER", userId, "Assigned role " + role.getName() + " to user");
+        notificationService.notify(userId, "ROLE_ASSIGNED",
+                "New role assigned",
+                "You have been granted role: " + role.getName());
         log.info("Role {} assigned to user {}", roleId, userId);
     }
 
@@ -166,6 +178,9 @@ public class UserServiceImpl implements UserService {
         if (user.getRoles().remove(role)) {
             userRepo.save(user);
             auditService.log(null, "REMOVE_ROLE", "USER", userId, "Removed role " + role.getName() + " from user");
+            notificationService.notify(userId, "ROLE_REMOVED",
+                    "Role removed",
+                    "Role " + role.getName() + " has been removed from your account");
             log.info("Role {} removed from user {}", roleId, userId);
         } else {
             log.warn("User {} did not have role {}", userId, roleId);
@@ -218,4 +233,95 @@ public class UserServiceImpl implements UserService {
     public Optional<User> getUserByEmail(String email) {
         return userRepo.findByEmail(email);
     }
-} 
+
+    @Override
+    @Transactional
+    public User authenticate(String identifier, String rawPassword, String ipAddress) {
+        User user = userRepo.findByUsername(identifier)
+                .or(() -> userRepo.findByEmail(identifier))
+                .orElseThrow(InvalidCredentialsException::new);
+
+        Date now = new Date();
+        if (user.getLockedUntil() != null && user.getLockedUntil().after(now)) {
+            throw new AccountLockedException("Account is locked. Try again after " + user.getLockedUntil());
+        }
+
+        if (!encoder.matches(rawPassword, user.getPassword())) {
+            int attempts = user.getFailedLoginAttempts() + 1;
+            user.setFailedLoginAttempts(attempts);
+            String detail;
+            if (attempts >= MAX_LOGIN_ATTEMPTS) {
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(now);
+                cal.add(Calendar.MINUTE, LOCKOUT_MINUTES);
+                user.setLockedUntil(cal.getTime());
+                user.setFailedLoginAttempts(0);
+                detail = "Account locked after " + MAX_LOGIN_ATTEMPTS + " failed attempts (ip=" + ipAddress + ")";
+                userRepo.save(user);
+                auditService.log(user.getUsername(), "ACCOUNT_LOCKED", "USER", user.getUserId(), detail);
+                notificationService.notify(user.getUserId(), "ACCOUNT_LOCKED",
+                        "Your account has been locked",
+                        "Too many failed login attempts. Try again in " + LOCKOUT_MINUTES + " minutes.");
+                throw new AccountLockedException("Account locked due to too many failed login attempts. Try again in "
+                        + LOCKOUT_MINUTES + " minutes.");
+            }
+            userRepo.save(user);
+            auditService.log(user.getUsername(), "LOGIN_FAILED", "USER", user.getUserId(),
+                    "Failed login attempt " + attempts + " (ip=" + ipAddress + ")");
+            throw new InvalidCredentialsException();
+        }
+
+        if (!UserStatus.ACTIVE.equals(user.getStatus())) {
+            throw new BusinessValidationException("Account is not active: status=" + user.getStatus());
+        }
+
+        if (user.getFailedLoginAttempts() != 0 || user.getLockedUntil() != null) {
+            user.setFailedLoginAttempts(0);
+            user.setLockedUntil(null);
+            userRepo.save(user);
+        }
+        auditService.log(user.getUsername(), "LOGIN_SUCCESS", "USER", user.getUserId(), "ip=" + ipAddress);
+        return user;
+    }
+
+    @Override
+    @Transactional
+    public User unlockAccount(String userId, String actor) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+        User saved = userRepo.save(user);
+        auditService.log(actor, "UNLOCK", "USER", userId, "Manually unlocked user: " + user.getUsername());
+        notificationService.notify(userId, "ACCOUNT_UNLOCKED",
+                "Your account has been unlocked",
+                "An administrator has unlocked your account.");
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public User updateProfile(String userId, String firstName, String lastName, String phone, String bio) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+        if (firstName != null) user.setFirstName(firstName);
+        if (lastName != null) user.setLastName(lastName);
+        if (phone != null) user.setPhone(phone);
+        if (bio != null) user.setBio(bio);
+        User saved = userRepo.save(user);
+        auditService.log(user.getUsername(), "UPDATE_PROFILE", "USER", userId, "Profile updated");
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public User updateAvatarUrl(String userId, String avatarUrl) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+        user.setAvatarUrl(avatarUrl);
+        User saved = userRepo.save(user);
+        auditService.log(user.getUsername(), "UPDATE_AVATAR", "USER", userId, "Avatar URL: " + avatarUrl);
+        return saved;
+    }
+}
+

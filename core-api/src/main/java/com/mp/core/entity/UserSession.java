@@ -13,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "user_sessions", schema = "sample_app")
@@ -21,38 +22,49 @@ public class UserSession {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String sessionId;
-    
+
     private String userId;
     private String token;
-    
+
+    @Column(name = "refresh_token_id")
+    private String refreshTokenId;
+
+    @Transient
+    private String refreshToken;
+
     @Column(nullable = false)
     private String status = "active";
-    
+
     @CreatedDate
     private Date createdAt;
-    
+
     @LastModifiedDate
     private Date lastActivityAt;
 
-    // Getters and Setters
     public String getSessionId() { return sessionId; }
     public void setSessionId(String sessionId) { this.sessionId = sessionId; }
-    
+
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
-    
+
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
-    
+
+    public String getRefreshTokenId() { return refreshTokenId; }
+    public void setRefreshTokenId(String refreshTokenId) { this.refreshTokenId = refreshTokenId; }
+
+    public String getRefreshToken() { return refreshToken; }
+    public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
+
     public boolean isActive() { return "active".equals(status); }
     public void setActive(boolean active) { this.status = active ? "active" : "inactive"; }
-    
+
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    
+
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
-    
+
     public Date getLastActivityAt() { return lastActivityAt; }
     public void setLastActivityAt(Date lastActivityAt) { this.lastActivityAt = lastActivityAt; }
-} 
+}

@@ -33,7 +33,7 @@ public class PermissionWebService {
     public List<Map<String, Object>> getAllPermissions() {
         try {
             ResponseEntity<List> response = restTemplate.getForEntity(
-                coreApiUrl + "/api/permissions",
+                coreApiUrl + "/api/v1/permissions",
                 List.class
             );
             return response.getBody();
@@ -55,7 +55,7 @@ public class PermissionWebService {
     public Map<String, Object> getPermissionById(String permissionId) {
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity(
-                coreApiUrl + "/api/permissions/" + permissionId,
+                coreApiUrl + "/api/v1/permissions/" + permissionId,
                 Map.class
             );
             return response.getBody();
@@ -89,7 +89,7 @@ public class PermissionWebService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(permissionForm, headers);
             
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                coreApiUrl + "/api/permissions",
+                coreApiUrl + "/api/v1/permissions",
                 request,
                 Map.class
             );
@@ -154,7 +154,7 @@ public class PermissionWebService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(permissionForm, headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
-                coreApiUrl + "/api/permissions/" + permissionId,
+                coreApiUrl + "/api/v1/permissions/" + permissionId,
                 HttpMethod.PUT,
                 request,
                 Map.class
@@ -212,7 +212,7 @@ public class PermissionWebService {
      */
     public void deletePermission(String permissionId) {
         try {
-            restTemplate.delete(coreApiUrl + "/api/permissions/" + permissionId);
+            restTemplate.delete(coreApiUrl + "/api/v1/permissions/" + permissionId);
             log.info("Permission {} deleted successfully", permissionId);
             
         } catch (HttpClientErrorException.NotFound ex) {
@@ -265,7 +265,7 @@ public class PermissionWebService {
     public List<Map<String, Object>> findByResource(String resource) {
         try {
             ResponseEntity<List> response = restTemplate.getForEntity(
-                coreApiUrl + "/api/permissions/search?resource=" + resource,
+                coreApiUrl + "/api/v1/permissions/search?resource=" + resource,
                 List.class
             );
             return response.getBody();
@@ -287,7 +287,7 @@ public class PermissionWebService {
     public List<Map<String, Object>> findByResourceAndAction(String resource, String action) {
         try {
             ResponseEntity<List> response = restTemplate.getForEntity(
-                coreApiUrl + "/api/permissions/search?resource=" + resource + "&action=" + action,
+                coreApiUrl + "/api/v1/permissions/search?resource=" + resource + "&action=" + action,
                 List.class
             );
             return response.getBody();

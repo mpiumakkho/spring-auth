@@ -33,7 +33,7 @@ public class RoleWebService {
     public List<Map<String, Object>> getAllRoles() {
         try {
             ResponseEntity<List> response = restTemplate.getForEntity(
-                coreApiUrl + "/api/roles",
+                coreApiUrl + "/api/v1/roles",
                 List.class
             );
             return response.getBody();
@@ -55,7 +55,7 @@ public class RoleWebService {
     public Map<String, Object> getRoleById(String roleId) {
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity(
-                coreApiUrl + "/api/roles/" + roleId,
+                coreApiUrl + "/api/v1/roles/" + roleId,
                 Map.class
             );
             return response.getBody();
@@ -89,7 +89,7 @@ public class RoleWebService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(roleForm, headers);
             
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                coreApiUrl + "/api/roles",
+                coreApiUrl + "/api/v1/roles",
                 request,
                 Map.class
             );
@@ -154,7 +154,7 @@ public class RoleWebService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(roleForm, headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
-                coreApiUrl + "/api/roles/" + roleId,
+                coreApiUrl + "/api/v1/roles/" + roleId,
                 HttpMethod.PUT,
                 request,
                 Map.class
@@ -212,7 +212,7 @@ public class RoleWebService {
      */
     public void deleteRole(String roleId) {
         try {
-            restTemplate.delete(coreApiUrl + "/api/roles/" + roleId);
+            restTemplate.delete(coreApiUrl + "/api/v1/roles/" + roleId);
             log.info("Role {} deleted successfully", roleId);
             
         } catch (HttpClientErrorException.NotFound ex) {
@@ -265,7 +265,7 @@ public class RoleWebService {
     public List<Map<String, Object>> getRolePermissions(String roleId) {
         try {
             ResponseEntity<List> response = restTemplate.getForEntity(
-                coreApiUrl + "/api/roles/" + roleId + "/permissions",
+                coreApiUrl + "/api/v1/roles/" + roleId + "/permissions",
                 List.class
             );
             return response.getBody();
@@ -300,7 +300,7 @@ public class RoleWebService {
             HttpEntity<Map<String, String>> entity = new HttpEntity<>(request, headers);
             
             restTemplate.postForEntity(
-                coreApiUrl + "/api/roles/" + roleId + "/permissions",
+                coreApiUrl + "/api/v1/roles/" + roleId + "/permissions",
                 entity,
                 Void.class
             );
@@ -331,7 +331,7 @@ public class RoleWebService {
     public void removePermission(String roleId, String permissionId) {
         try {
             restTemplate.delete(
-                coreApiUrl + "/api/roles/" + roleId + "/permissions/" + permissionId
+                coreApiUrl + "/api/v1/roles/" + roleId + "/permissions/" + permissionId
             );
             
             log.info("Permission {} removed from role {}", permissionId, roleId);

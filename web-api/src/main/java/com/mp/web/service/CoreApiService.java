@@ -42,7 +42,7 @@ public class CoreApiService {
     // User operations
     public List<Map<String, Object>> getAllUsers() {
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-            coreApiUrl + "/api/users",
+            coreApiUrl + "/api/v1/users",
             HttpMethod.GET,
             null,
             new ParameterizedTypeReference<List<Map<String, Object>>>() {}
@@ -53,7 +53,7 @@ public class CoreApiService {
     public Map<String, Object> getUserById(String userId) {
         HttpEntity<Map<String, String>> request = new HttpEntity<>(Map.of("userId", userId), headers);
         return restTemplate.postForObject(
-            coreApiUrl + "/api/users/find-by-id",
+            coreApiUrl + "/api/v1/users/find-by-id",
             request,
             Map.class
         );
@@ -62,7 +62,7 @@ public class CoreApiService {
     public Map<String, Object> createUser(Map<String, Object> user) {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(user, headers);
         return restTemplate.postForObject(
-            coreApiUrl + "/api/users/create",
+            coreApiUrl + "/api/v1/users/create",
             request,
             Map.class
         );
@@ -70,13 +70,13 @@ public class CoreApiService {
 
     public void updateUser(Map<String, Object> user) {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(user, headers);
-        restTemplate.put(coreApiUrl + "/api/users/update", request);
+        restTemplate.put(coreApiUrl + "/api/v1/users/update", request);
     }
 
     public void deleteUser(String userId) {
         HttpEntity<Map<String, String>> request = new HttpEntity<>(Map.of("userId", userId), headers);
         restTemplate.postForObject(
-            coreApiUrl + "/api/users/delete",
+            coreApiUrl + "/api/v1/users/delete",
             request,
             String.class
         );
@@ -88,7 +88,7 @@ public class CoreApiService {
             headers
         );
         restTemplate.postForObject(
-            coreApiUrl + "/api/users/assign-role",
+            coreApiUrl + "/api/v1/users/assign-role",
             request,
             String.class
         );
@@ -100,7 +100,7 @@ public class CoreApiService {
             headers
         );
         restTemplate.postForObject(
-            coreApiUrl + "/api/users/remove-role",
+            coreApiUrl + "/api/v1/users/remove-role",
             request,
             String.class
         );
@@ -109,7 +109,7 @@ public class CoreApiService {
     // Role operations
     public List<Map<String, Object>> getAllRoles() {
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-            coreApiUrl + "/api/roles",
+            coreApiUrl + "/api/v1/roles",
             HttpMethod.GET,
             null,
             new ParameterizedTypeReference<List<Map<String, Object>>>() {}
@@ -120,7 +120,7 @@ public class CoreApiService {
     public Map<String, Object> getRoleById(String roleId) {
         HttpEntity<Map<String, String>> request = new HttpEntity<>(Map.of("roleId", roleId), headers);
         return restTemplate.postForObject(
-            coreApiUrl + "/api/roles/find-by-id",
+            coreApiUrl + "/api/v1/roles/find-by-id",
             request,
             Map.class
         );
@@ -129,7 +129,7 @@ public class CoreApiService {
     public Map<String, Object> createRole(Map<String, Object> role) {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(role, headers);
         return restTemplate.postForObject(
-            coreApiUrl + "/api/roles/create",
+            coreApiUrl + "/api/v1/roles/create",
             request,
             Map.class
         );
@@ -137,13 +137,13 @@ public class CoreApiService {
 
     public void updateRole(Map<String, Object> role) {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(role, headers);
-        restTemplate.put(coreApiUrl + "/api/roles/update", request);
+        restTemplate.put(coreApiUrl + "/api/v1/roles/update", request);
     }
 
     public void deleteRole(String roleId) {
         HttpEntity<Map<String, String>> request = new HttpEntity<>(Map.of("roleId", roleId), headers);
         restTemplate.postForObject(
-            coreApiUrl + "/api/roles/delete",
+            coreApiUrl + "/api/v1/roles/delete",
             request,
             String.class
         );
@@ -155,7 +155,7 @@ public class CoreApiService {
             headers
         );
         restTemplate.postForObject(
-            coreApiUrl + "/api/roles/assign-permission",
+            coreApiUrl + "/api/v1/roles/assign-permission",
             request,
             String.class
         );
@@ -167,7 +167,7 @@ public class CoreApiService {
             headers
         );
         restTemplate.postForObject(
-            coreApiUrl + "/api/roles/remove-permission",
+            coreApiUrl + "/api/v1/roles/remove-permission",
             request,
             String.class
         );
@@ -176,7 +176,7 @@ public class CoreApiService {
     public List<Map<String, Object>> getRolePermissions(String roleId) {
         HttpEntity<Map<String, String>> request = new HttpEntity<>(Map.of("roleId", roleId), headers);
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-            coreApiUrl + "/api/roles/get-permissions",
+            coreApiUrl + "/api/v1/roles/get-permissions",
             HttpMethod.POST,
             request,
             new ParameterizedTypeReference<List<Map<String, Object>>>() {}
@@ -187,7 +187,7 @@ public class CoreApiService {
     // Permission operations
     public List<Map<String, Object>> getAllPermissions() {
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-            coreApiUrl + "/api/permissions",
+            coreApiUrl + "/api/v1/permissions",
             HttpMethod.GET,
             null,
             new ParameterizedTypeReference<List<Map<String, Object>>>() {}
@@ -198,7 +198,7 @@ public class CoreApiService {
     public Map<String, Object> getPermissionById(String permissionId) {
         HttpEntity<Map<String, String>> request = new HttpEntity<>(Map.of("permissionId", permissionId), headers);
         return restTemplate.postForObject(
-            coreApiUrl + "/api/permissions/find-by-id",
+            coreApiUrl + "/api/v1/permissions/find-by-id",
             request,
             Map.class
         );
@@ -207,7 +207,7 @@ public class CoreApiService {
     public Map<String, Object> createPermission(Map<String, Object> permission) {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(permission, headers);
         return restTemplate.postForObject(
-            coreApiUrl + "/api/permissions/create",
+            coreApiUrl + "/api/v1/permissions/create",
             request,
             Map.class
         );
@@ -215,13 +215,13 @@ public class CoreApiService {
 
     public void updatePermission(Map<String, Object> permission) {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(permission, headers);
-        restTemplate.put(coreApiUrl + "/api/permissions/update", request);
+        restTemplate.put(coreApiUrl + "/api/v1/permissions/update", request);
     }
 
     public void deletePermission(String permissionId) {
         HttpEntity<Map<String, String>> request = new HttpEntity<>(Map.of("permissionId", permissionId), headers);
         restTemplate.postForObject(
-            coreApiUrl + "/api/permissions/delete",
+            coreApiUrl + "/api/v1/permissions/delete",
             request,
             String.class
         );
@@ -230,7 +230,7 @@ public class CoreApiService {
     public List<Map<String, Object>> findPermissionsByResource(String resource) {
         HttpEntity<Map<String, String>> request = new HttpEntity<>(Map.of("resource", resource), headers);
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-            coreApiUrl + "/api/permissions/find-by-resource",
+            coreApiUrl + "/api/v1/permissions/find-by-resource",
             HttpMethod.POST,
             request,
             new ParameterizedTypeReference<List<Map<String, Object>>>() {}
@@ -244,7 +244,7 @@ public class CoreApiService {
             headers
         );
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-            coreApiUrl + "/api/permissions/find-by-resource-and-action",
+            coreApiUrl + "/api/v1/permissions/find-by-resource-and-action",
             HttpMethod.POST,
             request,
             new ParameterizedTypeReference<List<Map<String, Object>>>() {}

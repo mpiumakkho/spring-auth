@@ -47,3 +47,7 @@ documentation/
 ### Windows ###
 desktop.ini
 Thumbs.db
+
+### Local upload storage (avatars, etc.) ###
+uploads/
+**/uploads/

@@ -1,5 +1,7 @@
 package com.mp.core.dto;
 
+import com.mp.core.validation.PasswordPolicy;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -15,6 +17,6 @@ public record UpdateUserRequestDTO(
         @Size(max = 100, message = "Last name must not exceed 100 characters")
         String lastName,
 
-        @Size(min = 8, message = "Password must be at least 8 characters")
+        @PasswordPolicy(allowEmpty = true)
         String password
 ) {}
