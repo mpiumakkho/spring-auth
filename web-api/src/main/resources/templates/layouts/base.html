@@ -32,23 +32,8 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/dashboard}" th:classappend="${currentPath != null and currentPath == '/dashboard' ? 'active' : ''}">
-                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/users}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/users') ? 'active' : ''}">
-                            <i class="bi bi-people me-1"></i>Users
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/roles}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/roles') ? 'active' : ''}">
-                            <i class="bi bi-person-badge me-1"></i>Roles
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/permissions}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/permissions') ? 'active' : ''}">
-                            <i class="bi bi-key me-1"></i>Permissions
+                        <a class="nav-link" th:href="@{/dashboard}">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Open app
                         </a>
                     </li>
                 </ul>

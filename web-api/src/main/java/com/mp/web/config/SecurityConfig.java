@@ -74,7 +74,11 @@ public class SecurityConfig {
         return src;
     }
 
-    /** Legacy Thymeleaf MVC chain — unchanged. */
+    /**
+     * Legacy Thymeleaf MVC chain — now scoped down to just the public auth
+     * landing (/, /login, /auth/login, /auth/logout) plus a dashboard
+     * redirect. All CRUD UIs live in the SPA via /bff/**.
+     */
     @Bean
     public SecurityFilterChain mvcFilterChain(HttpSecurity http) throws Exception {
         http
@@ -84,17 +88,8 @@ public class SecurityConfig {
                 .authenticationProvider(coreApiAuthProvider)
                 .addFilterBefore(sessionFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/auth/login", "/resources/**", "/static/**", "/css/**", "/js/**", "/images/**", "/ums/css/**", "/ums/js/**", "/ums/images/**", "/ums/static/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
-                .requestMatchers("/users/create", "/users/edit/**", "/users/update", "/users/delete/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "USER_MANAGER")
-                .requestMatchers("/users/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "USER_MANAGER", "MODERATOR", "VIEWER", "SUPPORT")
-                .requestMatchers("/roles/create", "/roles/edit/**", "/roles/update", "/roles/delete/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/roles/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "VIEWER")
-                .requestMatchers("/permissions/create", "/permissions/edit/**", "/permissions/update", "/permissions/delete/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers("/permissions/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "VIEWER")
-                .requestMatchers("/reports/export", "/reports/analytics").hasAnyRole("SUPER_ADMIN", "ANALYST")
-                .requestMatchers("/reports/**").hasAnyRole("SUPER_ADMIN", "ANALYST", "VIEWER", "SUPPORT")
-                .requestMatchers("/dashboard", "/profile/**").authenticated()
+                .requestMatchers("/", "/login", "/auth/login", "/resources/**", "/static/**", "/css/**", "/js/**", "/images/**", "/actuator/**").permitAll()
+                .requestMatchers("/dashboard").authenticated()
                 .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
