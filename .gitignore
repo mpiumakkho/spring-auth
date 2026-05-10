@@ -42,4 +42,8 @@ application-local.properties
 application-local.yml
 
 ### Documentation ###
-documentation/ 
+documentation/
+
+### Windows ###
+desktop.ini
+Thumbs.db
