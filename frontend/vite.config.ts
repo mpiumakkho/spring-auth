@@ -12,8 +12,6 @@ export default defineConfig({
       "/bff": {
         target: "http://localhost:8081",
         changeOrigin: true,
-        // web-api context-path is /ums, so /bff/x -> /ums/bff/x upstream
-        rewrite: (path) => `/ums${path}`,
       },
     },
   },

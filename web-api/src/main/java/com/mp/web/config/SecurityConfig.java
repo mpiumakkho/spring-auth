@@ -2,66 +2,57 @@ package com.mp.web.config;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.mp.web.security.CoreApiAuthProvider;
-import com.mp.web.security.SessionAuthSuccessHandler;
-import com.mp.web.security.SessionFilter;
-
 /**
- * Two filter chains so the BFF (cookie-JWT for SPA) and the legacy Thymeleaf MVC
- * (Spring Session form-login) can coexist on the same web-api instance.
+ * web-api is a pure BFF for the React SPA. The legacy Thymeleaf MVC chain
+ * (form-login, Spring Session, server-rendered templates) was retired — the SPA
+ * owns every UI surface now. All routes here are stateless cookie-JWT.
+ *
+ * Surfaces:
+ *   - /bff/auth/login    /bff/auth/refresh    /bff/auth/oauth2-callback   public
+ *   - everything else under /bff/**                                       BffProxyController
+ *                                                                         + BffAuthController
+ *                                                                         enforce auth via cookie
+ *   - /actuator/**                                                        Prometheus + health
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private CoreApiAuthProvider coreApiAuthProvider;
-
-    @Autowired
-    private SessionAuthSuccessHandler sessionAuthSuccessHandler;
-
-    @Autowired
-    private SessionFilter sessionFilter;
-
     @Value("${bff.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
     private List<String> allowedOrigins;
 
-    /** BFF chain: stateless, CSRF off, CORS on. SPA hits /bff/**. */
     @Bean
-    @Order(Ordered.HIGHEST_PRECEDENCE)
     public SecurityFilterChain bffFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher("/bff/**")
-            .cors(cors -> cors.configurationSource(bffCorsSource()))
+            .cors(cors -> cors.configurationSource(corsSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/bff/auth/login", "/bff/auth/refresh").permitAll()
-                .anyRequest().permitAll() // BffProxyController enforces auth via cookie itself
+                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/bff/auth/login", "/bff/auth/refresh", "/bff/auth/oauth2-callback").permitAll()
+                // The BFF controllers enforce auth via the rbac_token cookie themselves —
+                // Spring Security shouldn't 401 before they get to inspect it.
+                .anyRequest().permitAll()
             )
-            .formLogin(Customizer.withDefaults()).formLogin(login -> login.disable())
-            .httpBasic(b -> b.disable());
+            .formLogin(f -> f.disable())
+            .httpBasic(b -> b.disable())
+            .logout(l -> l.disable());
         return http.build();
     }
 
     @Bean
-    public CorsConfigurationSource bffCorsSource() {
+    public CorsConfigurationSource corsSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(allowedOrigins);
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
@@ -72,39 +63,5 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
         src.registerCorsConfiguration("/bff/**", cfg);
         return src;
-    }
-
-    /**
-     * Legacy Thymeleaf MVC chain — now scoped down to just the public auth
-     * landing (/, /login, /auth/login, /auth/logout) plus a dashboard
-     * redirect. All CRUD UIs live in the SPA via /bff/**.
-     */
-    @Bean
-    public SecurityFilterChain mvcFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf
-                    .ignoringRequestMatchers("/auth/logout")
-                )
-                .authenticationProvider(coreApiAuthProvider)
-                .addFilterBefore(sessionFilter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/auth/login", "/resources/**", "/static/**", "/css/**", "/js/**", "/images/**", "/actuator/**").permitAll()
-                .requestMatchers("/dashboard").authenticated()
-                .anyRequest().authenticated()
-                )
-                .formLogin(form -> form
-                .loginPage("/")
-                .loginProcessingUrl("/")
-                .successHandler(sessionAuthSuccessHandler)
-                .permitAll()
-                )
-                .logout(logout -> logout
-                .logoutUrl("/auth/logout")
-                .logoutSuccessUrl("/")
-                .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
-                .permitAll()
-                );
-        return http.build();
     }
 }

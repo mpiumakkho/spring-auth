@@ -38,7 +38,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
 
-    @Value("${app.security.oauth2.success-redirect:http://localhost:8081/ums/bff/auth/oauth2-callback}")
+    @Value("${app.security.oauth2.success-redirect:http://localhost:8081/bff/auth/oauth2-callback}")
     private String successRedirect;
 
     public OAuth2SuccessHandler(

@@ -16,11 +16,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
+public class WebConfig {
 
     @Value("${core.api.timeout:30000}")
     private int timeout;
@@ -90,17 +88,5 @@ public class WebConfig implements WebMvcConfigurer {
         });
 
         return restTemplate;
-    }
-
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/css/**")
-                .addResourceLocations("classpath:/static/css/");
-        registry.addResourceHandler("/js/**")
-                .addResourceLocations("classpath:/static/js/");
-        registry.addResourceHandler("/images/**")
-                .addResourceLocations("classpath:/static/images/");
-        registry.addResourceHandler("/static/**")
-                .addResourceLocations("classpath:/static/");
     }
 }

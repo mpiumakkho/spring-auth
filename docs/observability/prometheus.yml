@@ -12,7 +12,7 @@ scrape_configs:
           env: docker
 
   - job_name: web-api
-    metrics_path: /ums/actuator/prometheus
+    metrics_path: /actuator/prometheus
     static_configs:
       - targets: ['web-api:8081']
         labels:
