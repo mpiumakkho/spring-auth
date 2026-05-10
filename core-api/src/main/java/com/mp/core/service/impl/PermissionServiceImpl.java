@@ -155,12 +155,6 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Permission> getAllPermissions() {
-        return permRepo.findAll();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<Permission> getAllPermissions(Pageable pageable) {
         return permRepo.findAll(pageable);
     }

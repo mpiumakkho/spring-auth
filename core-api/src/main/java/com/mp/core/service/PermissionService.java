@@ -14,7 +14,6 @@ public interface PermissionService {
     void deletePermission(String id);
     Optional<Permission> getPermissionById(String id);
     Optional<Permission> getPermissionByName(String name);
-    List<Permission> getAllPermissions();
     Page<Permission> getAllPermissions(Pageable pageable);
     List<Permission> getPermissionsByResource(String resource);
     List<Permission> getPermissionsByResourceAndAction(String resource, String action);

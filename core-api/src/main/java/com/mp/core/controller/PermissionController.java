@@ -18,12 +18,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mp.core.dto.CreatePermissionRequestDTO;
 import com.mp.core.dto.PermissionIdRequestDTO;
 import com.mp.core.dto.PermissionNameRequestDTO;
 import com.mp.core.dto.ResourceActionFilterRequestDTO;
 import com.mp.core.dto.ResourceFilterRequestDTO;
+import com.mp.core.dto.UpdatePermissionRequestDTO;
 import com.mp.core.entity.Permission;
-import com.mp.core.exception.BusinessValidationException;
 import com.mp.core.exception.ResourceNotFoundException;
 import com.mp.core.service.PermissionService;
 
@@ -51,6 +52,7 @@ public class PermissionController {
     }
 
     @PostMapping("/find-by-id")
+    @PreAuthorize("hasPermission(null, 'PERMISSION:READ') or hasRole('ADMIN')")
     public ResponseEntity<Permission> getPermissionById(@Valid @RequestBody PermissionIdRequestDTO request) {
         Permission permission = permissionService.getPermissionById(request.permissionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Permission", request.permissionId()));
@@ -58,6 +60,7 @@ public class PermissionController {
     }
 
     @PostMapping("/find-by-name")
+    @PreAuthorize("hasPermission(null, 'PERMISSION:READ') or hasRole('ADMIN')")
     public ResponseEntity<Permission> getPermissionByName(@Valid @RequestBody PermissionNameRequestDTO request) {
         Permission permission = permissionService.getPermissionByName(request.name())
                 .orElseThrow(() -> new ResourceNotFoundException("Permission with name '" + request.name() + "' not found"));
@@ -65,11 +68,13 @@ public class PermissionController {
     }
 
     @PostMapping("/find-by-resource")
+    @PreAuthorize("hasPermission(null, 'PERMISSION:READ') or hasRole('ADMIN')")
     public ResponseEntity<List<Permission>> getPermissionsByResource(@Valid @RequestBody ResourceFilterRequestDTO request) {
         return ResponseEntity.ok(permissionService.getPermissionsByResource(request.resource()));
     }
 
     @PostMapping("/find-by-resource-and-action")
+    @PreAuthorize("hasPermission(null, 'PERMISSION:READ') or hasRole('ADMIN')")
     public ResponseEntity<List<Permission>> getPermissionsByResourceAndAction(
             @Valid @RequestBody ResourceActionFilterRequestDTO request) {
         return ResponseEntity.ok(
@@ -78,16 +83,10 @@ public class PermissionController {
 
     @PostMapping("/create")
     @PreAuthorize("hasPermission(null, 'PERMISSION:CREATE') or hasRole('ADMIN')")
-    public ResponseEntity<Permission> createPermission(@RequestBody Permission permission) {
-        if (permission.getName() == null || permission.getName().isBlank()) {
-            throw new BusinessValidationException("Permission name is required");
-        }
-        if (permission.getResource() == null || permission.getResource().isBlank()) {
-            throw new BusinessValidationException("Permission resource is required");
-        }
-        if (permission.getAction() == null || permission.getAction().isBlank()) {
-            throw new BusinessValidationException("Permission action is required");
-        }
+    public ResponseEntity<Permission> createPermission(@Valid @RequestBody CreatePermissionRequestDTO request) {
+        Permission permission = new Permission();
+        permission.setName(request.name());
+        permission.setDescription(request.description());
         Permission created = permissionService.createPermission(permission);
         log.info("Permission created: {} (id={})", created.getName(), created.getPermissionId());
         return ResponseEntity.ok(created);
@@ -95,11 +94,12 @@ public class PermissionController {
 
     @PutMapping("/update")
     @PreAuthorize("hasPermission(null, 'PERMISSION:UPDATE') or hasRole('ADMIN')")
-    public ResponseEntity<Permission> updatePermission(@RequestBody Permission permission) {
-        if (permission.getPermissionId() == null || permission.getPermissionId().isBlank()) {
-            throw new BusinessValidationException("Permission ID is required");
-        }
-        Permission updated = permissionService.updatePermission(permission);
+    public ResponseEntity<Permission> updatePermission(@Valid @RequestBody UpdatePermissionRequestDTO request) {
+        Permission updates = new Permission();
+        updates.setPermissionId(request.permissionId());
+        updates.setName(request.name());
+        updates.setDescription(request.description());
+        Permission updated = permissionService.updatePermission(updates);
         log.info("Permission updated: {}", updated.getPermissionId());
         return ResponseEntity.ok(updated);
     }

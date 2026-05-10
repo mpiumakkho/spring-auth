@@ -14,7 +14,6 @@ public interface UserService {
     void deleteUser(String id);
     Optional<User> getUserById(String id);
     Optional<User> getUserByUsername(String username);
-    List<User> getAllUsers();
     Page<User> getAllUsers(Pageable pageable);
     void assignRoleToUser(String userId, String roleId);
     void removeRoleFromUser(String userId, String roleId);

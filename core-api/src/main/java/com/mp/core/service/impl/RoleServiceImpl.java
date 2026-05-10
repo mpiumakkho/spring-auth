@@ -124,12 +124,6 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Role> getAllRoles() {
-        return roleRepo.findAll();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<Role> getAllRoles(Pageable pageable) {
         return roleRepo.findAll(pageable);
     }

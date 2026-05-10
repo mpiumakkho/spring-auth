@@ -51,8 +51,8 @@ public class User {
     private String lastName;
 
     @Column(nullable = false, length = 20)
-    private String status = "inactive";
-    
+    private String status = UserStatus.INACTIVE;
+
     @CreatedDate
     private Date createdAt;
     @LastModifiedDate
@@ -72,7 +72,7 @@ public class User {
     @PrePersist
     public void prePersist() {
         if (this.status == null) {
-            this.status = "inactive";
+            this.status = UserStatus.INACTIVE;
         }
     }
 

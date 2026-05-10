@@ -25,9 +25,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mp.core.dto.AssignRoleRequestDTO;
+import com.mp.core.dto.CreateUserRequestDTO;
 import com.mp.core.dto.FindUserRequestDTO;
 import com.mp.core.dto.LoginRequestDTO;
 import com.mp.core.dto.StatusFilterRequestDTO;
+import com.mp.core.dto.UpdateUserRequestDTO;
 import com.mp.core.dto.UpdateUserStatusRequestDTO;
 import com.mp.core.dto.UserIdRequestDTO;
 import com.mp.core.dto.UserMapper;
@@ -127,22 +129,30 @@ public class UserController {
 
     @PostMapping("/create")
     @PreAuthorize("hasPermission(null, 'USER:CREATE') or hasRole('ADMIN')")
-    public ResponseEntity<User> createUser(@Valid @RequestBody User newUser) {
-        log.info("Creating new user: {}", newUser.getUsername());
-        User user = userService.createUser(newUser);
-        log.debug("User created successfully with ID: {}", user.getUserId());
-        return ResponseEntity.ok(user);
+    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody CreateUserRequestDTO request) {
+        User newUser = new User();
+        newUser.setUsername(request.username());
+        newUser.setPassword(request.password());
+        newUser.setEmail(request.email());
+        newUser.setFirstName(request.firstName());
+        newUser.setLastName(request.lastName());
+        User created = userService.createUser(newUser);
+        log.info("User created: {} (id={})", created.getUsername(), created.getUserId());
+        return ResponseEntity.ok(UserMapper.toUserResponseDTO(created));
     }
 
     @PutMapping("/update")
     @PreAuthorize("hasPermission(null, 'USER:UPDATE') or hasRole('ADMIN')")
-    public ResponseEntity<User> updateUser(@RequestBody User user) {
-        if (user.getUserId() == null || user.getUserId().isBlank()) {
-            throw new BusinessValidationException("User ID is required");
-        }
-        User updated = userService.updateUser(user);
-        log.info("User {} updated successfully", user.getUserId());
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<UserResponseDTO> updateUser(@Valid @RequestBody UpdateUserRequestDTO request) {
+        User updates = new User();
+        updates.setUserId(request.userId());
+        updates.setUsername(request.username());
+        updates.setFirstName(request.firstName());
+        updates.setLastName(request.lastName());
+        updates.setPassword(request.password());
+        User updated = userService.updateUser(updates);
+        log.info("User updated: {}", updated.getUserId());
+        return ResponseEntity.ok(UserMapper.toUserResponseDTO(updated));
     }
 
     @DeleteMapping("/{id}")

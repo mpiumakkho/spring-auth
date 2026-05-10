@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mp.core.entity.Role;
 import com.mp.core.entity.User;
+import com.mp.core.entity.UserStatus;
 import com.mp.core.exception.BusinessValidationException;
 import com.mp.core.exception.DuplicateResourceException;
 import com.mp.core.exception.ResourceNotFoundException;
@@ -64,7 +65,7 @@ public class UserServiceImpl implements UserService {
             user.setPassword(encoder.encode(user.getPassword()));
         }
 
-        user.setStatus("pending");
+        user.setStatus(UserStatus.PENDING);
         
         log.info("Creating new user account for: {}", user.getUsername());
         User saved = userRepo.save(user);
@@ -129,12 +130,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<User> getAllUsers() {
-        return userRepo.findAll();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<User> getAllUsers(Pageable pageable) {
         return userRepo.findAll(pageable);
     }
@@ -183,7 +178,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepo.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User", userId));
             
-        if (!isValidStatus(status)) {
+        if (!UserStatus.isValid(status)) {
             throw new BusinessValidationException("Invalid status: " + status);
         }
 
@@ -192,32 +187,28 @@ public class UserServiceImpl implements UserService {
         return userRepo.save(user);
     }
 
-    private boolean isValidStatus(String status) {
-        return status != null && List.of("active", "inactive", "pending", "locked").contains(status);
-    }
-
     @Override
     @Transactional
     public User activateUser(String userId) {
-        return updateUserStatus(userId, "active");
+        return updateUserStatus(userId, UserStatus.ACTIVE);
     }
 
     @Override
     @Transactional
     public User deactivateUser(String userId) {
-        return updateUserStatus(userId, "inactive");
+        return updateUserStatus(userId, UserStatus.INACTIVE);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<User> getPendingUsers() {
-        return userRepo.findByStatus("pending");
+        return userRepo.findByStatus(UserStatus.PENDING);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<User> getUsersByStatus(String status) {
-        if (!isValidStatus(status)) {
+        if (!UserStatus.isValid(status)) {
             throw new BusinessValidationException("Invalid status filter: " + status);
         }
         return userRepo.findByStatus(status);
