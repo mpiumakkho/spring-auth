@@ -79,6 +79,57 @@
         { "expr": "rate(cache_gets_total{cache=\"rolePermissions\"}[1m])", "legendFormat": "gets-{{result}}" },
         { "expr": "rate(cache_puts_total{cache=\"rolePermissions\"}[1m])", "legendFormat": "puts" }
       ]
+    },
+    {
+      "id": 7,
+      "title": "BFF proxy p95 latency (ms)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "targets": [
+        {
+          "expr": "1000 * histogram_quantile(0.95, sum by (path, le) (rate(bff_proxy_duration_seconds_bucket{application=\"web-api\"}[5m])))",
+          "legendFormat": "{{path}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "BFF aggregation p95 (ms)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "targets": [
+        {
+          "expr": "1000 * histogram_quantile(0.95, sum by (endpoint, le) (rate(bff_aggregation_duration_seconds_bucket{application=\"web-api\"}[5m])))",
+          "legendFormat": "{{endpoint}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "BFF response cache hit ratio",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 22 },
+      "targets": [
+        {
+          "expr": "sum(rate(cache_gets_total{application=\"web-api\",cache=\"bffResponse\",result=\"hit\"}[5m])) / sum(rate(cache_gets_total{application=\"web-api\",cache=\"bffResponse\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "core-api RTT seen from BFF (p95 ms)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 18, "x": 6, "y": 22 },
+      "targets": [
+        {
+          "expr": "1000 * histogram_quantile(0.95, sum by (path, le) (rate(bff_proxy_duration_seconds_bucket{application=\"web-api\",outcome=\"success\"}[5m])))",
+          "legendFormat": "{{path}}"
+        }
+      ]
     }
   ]
 }
