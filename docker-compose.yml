@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: rbac-postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: P@ss4321
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rbac-network
+
+  # Core API (Backend)
+  core-api:
+    build:
+      context: ./core-api
+      dockerfile: Dockerfile
+    container_name: rbac-core-api
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: P@ss4321
+    ports:
+      - "8091:8091"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8091/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - rbac-network
+
+  # Web API (Frontend)
+  web-api:
+    build:
+      context: ./web-api
+      dockerfile: Dockerfile
+    container_name: rbac-web-api
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CORE_API_URL: http://core-api:8091
+    ports:
+      - "8081:8081"
+    depends_on:
+      core-api:
+        condition: service_healthy
+    networks:
+      - rbac-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  rbac-network:
+    driver: bridge

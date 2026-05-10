@@ -27,7 +27,7 @@ public class SessionAuthSuccessHandler implements AuthenticationSuccessHandler {
         Collection<?> roles = (Collection<?>) session.getAttribute("roles");
         Set<String> allowedRoles = Set.of(
             "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ROLE_USER_MANAGER", "ROLE_VIEWER",
-            "ROLE_MODERATOR", "ROLE_ANALYST", "ROLE_SUPPORT, ROLE_USER"
+            "ROLE_MODERATOR", "ROLE_ANALYST", "ROLE_SUPPORT", "ROLE_USER"
         );
         if (roles != null && roles.stream().anyMatch(r -> allowedRoles.contains(r.toString()))) {
             // ผู้ใช้มี role ที่อยู่ใน allowedRoles

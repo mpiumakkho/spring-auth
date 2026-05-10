@@ -4,9 +4,24 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 
-@SpringBootApplication
+/**
+ * Web API Application - UI Layer Only
+ * 
+ * This application serves as the UI/presentation layer and does NOT connect to any database.
+ * All data operations are handled by core-api via REST API calls.
+ * 
+ * Architecture:
+ * - web-api (UI Layer): Thymeleaf templates, REST controllers, Spring Security
+ * - core-api (Business Layer): Database operations, business logic, RBAC
+ */
+@SpringBootApplication(exclude = {
+    DataSourceAutoConfiguration.class,
+    HibernateJpaAutoConfiguration.class
+})
 public class WebApiApplication {
 
     public static String env;

@@ -16,12 +16,28 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${core.api.timeout:30000}")
     private int timeout;
 
+    @Value("${core.api.key}")
+    private String apiKey;
+
+    @Value("${core.api.url}")
+    private String coreApiUrl;
+
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        return builder
+        RestTemplate restTemplate = builder
                 .connectTimeout(Duration.ofMillis(timeout))
                 .readTimeout(Duration.ofMillis(timeout))
                 .build();
+
+        restTemplate.getInterceptors().add((request, body, execution) -> {
+            // Only add API key for core-api requests
+            if (request.getURI().toString().startsWith(coreApiUrl)) {
+                request.getHeaders().set("X-API-Key", apiKey);
+            }
+            return execution.execute(request, body);
+        });
+
+        return restTemplate;
     }
 
     @Override

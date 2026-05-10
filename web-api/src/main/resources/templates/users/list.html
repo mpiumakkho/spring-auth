@@ -9,35 +9,39 @@
         <!-- page header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h2 class="mb-1">
+                <h2 class="page-title mb-2">
                     <i class="bi bi-people me-2"></i>Users Management
                 </h2>
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Dashboard</a></li>
+                        <li class="breadcrumb-item">
+                            <a th:href="@{/dashboard}" class="text-decoration-none">
+                                <i class="bi bi-house-door"></i> Dashboard
+                            </a>
+                        </li>
                         <li class="breadcrumb-item active">Users</li>
                     </ol>
                 </nav>
             </div>
-            <a th:href="@{/users/create}" class="btn btn-primary" style="border-radius: 10px;">
+            <a th:href="@{/users/create}" class="btn btn-primary rounded-lg">
                 <i class="bi bi-person-plus me-2"></i>Add New User
             </a>
         </div>
 
         <!-- users table card -->
-        <div class="card shadow" style="border-radius: 15px; border: none;">
-            <div class="card-header py-3" style="background: linear-gradient(to right, #f8f9fa, #ffffff); border-radius: 15px 15px 0 0; border: none;">
+        <div class="card shadow-md rounded-2xl">
+            <div class="card-header py-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.1rem;">
+                    <h6 class="m-0 font-semibold text-primary text-lg">
                         <i class="bi bi-list-ul me-2"></i>All Users
                     </h6>
-                    <span class="badge bg-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: 8px;" 
+                    <span class="badge badge-primary" 
                           th:text="${users != null ? users.size() : 0} + ' Users'">0 Users</span>
                 </div>
             </div>
             <div class="card-body">
                 <!-- error alert -->
-                <div th:if="${error}" class="alert alert-danger" style="border-radius: 10px;">
+                <div th:if="${error}" class="alert alert-danger rounded-lg">
                     <i class="bi bi-exclamation-triangle me-2"></i>
                     <span th:text="${error}">Error message</span>
                 </div>
@@ -49,16 +53,16 @@
                         <p class="mt-2 text-muted">กำลังโหลดข้อมูล...</p>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-hover" id="usersTable" style="border-collapse: separate; border-spacing: 0 0.5rem;">
+                        <table class="table table-hover" id="usersTable">
                             <thead>
-                                <tr style="background-color: #f8f9fa;">
-                                    <th style="padding: 1rem;">User ID</th>
-                                    <th style="padding: 1rem;">Username</th>
-                                    <th style="padding: 1rem;">Email</th>
-                                    <th style="padding: 1rem;">Name</th>
-                                    <th style="padding: 1rem;">Status</th>
-                                    <th style="padding: 1rem;">Created</th>
-                                    <th class="text-center no-sort" style="padding: 1rem;">Actions</th>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th class="text-center no-sort">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>

@@ -1,0 +1,11 @@
+target/
+.idea/
+.vscode/
+*.iml
+*.log
+logs/
+.git/
+.gitignore
+README.md
+documentation/
+.env

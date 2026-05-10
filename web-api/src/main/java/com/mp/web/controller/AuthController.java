@@ -1,9 +1,9 @@
 package com.mp.web.controller;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -28,9 +28,6 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 @RequestMapping("/auth")
 public class AuthController {
-
-    private static final Logger LOG = LogManager.getLogger(AuthController.class);
-
     @Value("${core.api.url}")
     private String coreApiUrl;
 
@@ -75,7 +72,7 @@ public class AuthController {
                 try {
                     restTemplate.postForEntity(coreApiUrl + "/api/sessions/logout", entity, String.class);
                 } catch (Exception e) {
-                    // LOG.warn("Error invalidating session in core-api: {}", e.getMessage());
+                    // log.warn("Error invalidating session in core-api: {}", e.getMessage());
                 }
             }
             
@@ -83,7 +80,7 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("success", "Logged out successfully");
             
         } catch (Exception e) {
-            // LOG.error("Error during logout: {}", e.getMessage());
+            // log.error("Error during logout: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("error", "Error occurred during logout");
         }
         

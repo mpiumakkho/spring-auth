@@ -77,39 +77,48 @@ public class SessionFilter extends OncePerRequestFilter {
         HttpSession session = request.getSession(false);
         if (session != null && session.getAttribute("sessionToken") != null) {
             String token = (String) session.getAttribute("sessionToken");
-            
+
             try {
-                // check token with core-api
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 Map<String, String> req = Map.of("token", token);
                 HttpEntity<Map<String, String>> entity = new HttpEntity<>(req, headers);
-                
+
                 ResponseEntity<String> validateResponse = restTemplate.postForEntity(
-                    coreApiUrl + "/api/sessions/validate", 
+                    coreApiUrl + "/api/sessions/validate",
                     entity,
                     String.class
                 );
-                
+
                 if (validateResponse.getStatusCode().is2xxSuccessful()) {
-                    // update last activity time
-                    restTemplate.postForEntity(
-                        coreApiUrl + "/api/sessions/keep-alive",
-                        entity,
-                        String.class
-                    );
+                    try {
+                        restTemplate.postForEntity(
+                            coreApiUrl + "/api/sessions/keep-alive",
+                            entity,
+                            String.class
+                        );
+                    } catch (Exception ignored) {
+                        // keep-alive failure is non-critical
+                    }
                     filterChain.doFilter(request, response);
                     return;
                 }
+
+                // Token explicitly invalid — clear session
+                session.invalidate();
+            } catch (org.springframework.web.client.ResourceAccessException e) {
+                // Core API unreachable — allow request to proceed with existing session
+                logger.warn("Core API unreachable, allowing session to continue: {}", e.getMessage());
+                filterChain.doFilter(request, response);
+                return;
             } catch (Exception e) {
-                logger.error("error checking session: {}", e.getMessage());
+                logger.error("Session validation error: {}", e.getMessage());
+                // Unknown error — don't invalidate, let user retry
+                filterChain.doFilter(request, response);
+                return;
             }
-            
-            // clear invalid session
-            session.invalidate();
         }
-        
-        // go to login page
+
         response.sendRedirect("/demo");
     }
     
