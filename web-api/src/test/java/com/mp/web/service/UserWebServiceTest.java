@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -94,7 +95,8 @@ class UserWebServiceTest {
     void getUserById_NotFound_ThrowsCoreApiClientException() {
         // Arrange
         when(restTemplate.getForEntity(anyString(), eq(Map.class)))
-            .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+            .thenThrow(HttpClientErrorException.create(
+                HttpStatus.NOT_FOUND, "Not Found", HttpHeaders.EMPTY, new byte[0], null));
 
         // Act & Assert
         CoreApiClientException exception = assertThrows(
@@ -129,7 +131,8 @@ class UserWebServiceTest {
         Map<String, Object> userForm = Map.of("username", "existing", "email", "existing@example.com");
         
         when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
-            .thenThrow(new HttpClientErrorException(HttpStatus.CONFLICT));
+            .thenThrow(HttpClientErrorException.create(
+                HttpStatus.CONFLICT, "Conflict", HttpHeaders.EMPTY, new byte[0], null));
 
         // Act & Assert
         CoreApiClientException exception = assertThrows(
@@ -147,7 +150,8 @@ class UserWebServiceTest {
         Map<String, Object> userForm = Map.of("username", "");
         
         when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
-            .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+            .thenThrow(HttpClientErrorException.create(
+                HttpStatus.BAD_REQUEST, "Bad Request", HttpHeaders.EMPTY, new byte[0], null));
 
         // Act & Assert
         CoreApiClientException exception = assertThrows(
