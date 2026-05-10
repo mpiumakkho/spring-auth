@@ -56,22 +56,36 @@ Sign in with `admin` / `password` — see [Default Accounts](#default-accounts) 
 ## Architecture
 
 ```text
-                  static SPA bundle               cookie-JWT  +  XHR
-Browser ──HTTP──► frontend (:5173)    Browser ──fetch──► web-api (:8081)
-                  Vite + React + TS              ─ BFF ─────────────────
-                  owns ALL UI                     /bff/auth/{login,refresh,logout,oauth2-callback}
-                                                  /bff/api/**            generic proxy
-                                                  /bff/api/v1/me/full    parallel aggregation
-                                                  Caffeine response cache · Apache HC5 pool
-                                                          │
-                                                          │ Authorization: Bearer <jwt>
-                                                          │ X-API-Key: <inter-service>
-                                                          ▼
-                                                  core-api (:8091)
-                                                  TokenFilter (JWT, no DB lookup)
-                                                  TenantFilterAspect · AttributePolicy
-                                                  @Async audit + notifications
-                                                  PostgreSQL (Flyway V1..V10) · Redis · OAuth2 Login
+┌──────────────────────────────────────────────────────────────────┐
+│                              Browser                             │
+└────┬─────────────────────────────────────┬───────────────────────┘
+     │ 1) GET /                            │ 2) fetch /bff/**
+     │    static SPA bundle                │    httpOnly cookie  (rbac_token, rbac_refresh)
+     ▼                                     ▼
+┌──────────────────────┐         ┌────────────────────────────────────────────────┐
+│ frontend (:5173)     │         │ web-api (:8081)  —  BFF                        │
+│                      │         ├────────────────────────────────────────────────┤
+│ Vite + React + TS    │         │ • /bff/auth/{login,refresh,logout,oauth2-cb}   │
+│ React Router         │         │ • /bff/api/**          generic proxy           │
+│                      │         │ • /bff/api/v1/me/full  parallel aggregation    │
+│                      │         │ • Caffeine response cache                      │
+└──────────────────────┘         │ • Apache HttpClient 5 pooled (200 / 50)        │
+                                 └─────────────────────┬──────────────────────────┘
+                                                       │ Authorization: Bearer <JWT>
+                                                       │ X-API-Key: <inter-service>
+                                                       ▼
+                                 ┌────────────────────────────────────────────────┐
+                                 │ core-api (:8091)                               │
+                                 ├────────────────────────────────────────────────┤
+                                 │ • TokenFilter — JWT, no DB lookup              │
+                                 │ • TenantFilterAspect — Hibernate @Filter       │
+                                 │ • AttributePolicy — ABAC SpEL helpers          │
+                                 │ • @Async audit + notifications                 │
+                                 │ • KafkaEventBridge (optional, conditional)     │
+                                 │ • OAuth2 Login (Google / GitHub, conditional)  │
+                                 ├────────────────────────────────────────────────┤
+                                 │ PostgreSQL 16 (Flyway V1..V10) · Redis cache   │
+                                 └────────────────────────────────────────────────┘
 ```
 
 The web-api earns its hop:
