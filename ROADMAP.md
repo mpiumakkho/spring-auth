@@ -318,7 +318,7 @@
 
 | | |
 |---|---|
-| **Status** | `[~]` In Progress (in-process @Async; full Kafka/RabbitMQ broker requires deployment) |
+| **Status** | `[x]` Done (in-process @Async listeners always run; KafkaEventBridge `@ConditionalOnProperty(spring.kafka.bootstrap-servers)` republishes audit + notification events to `rbac-ums.audit` / `rbac-ums.notifications` topics for downstream consumers when a broker is configured) |
 | **Complexity** | High |
 | **Depends on** | 1.1 Audit Log, 2.5 Notification |
 
@@ -421,7 +421,7 @@
 
 | | |
 |---|---|
-| **Status** | `[~]` In Progress (Vite + React + TS SPA running through web-api as a BFF — httpOnly cookie auth, X-API-Key never leaves the BFF, auto-refresh on 401. Thymeleaf MVC still parallel as a second filter chain until SPA reaches feature parity) |
+| **Status** | `[x]` Done (Vite + React + TS SPA owns 100% of UI; web-api retired Thymeleaf entirely and is now a pure BFF — cookie-JWT, API-key vault, response cache, aggregation, pooled HTTP) |
 | **Complexity** | High |
 | **Depends on** | 2.6 API Versioning, 3.1 Caching |
 

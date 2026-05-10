@@ -253,7 +253,7 @@ cd frontend && npm run build     # Vite production build
 
 **Docs:**
 
-- [ROADMAP.md](ROADMAP.md) — phase status (Phase 1 + 2 done; Phase 3 mostly done)
+- [ROADMAP.md](ROADMAP.md) — phase status (Phases 1, 2 and 3 all closed)
 - [CONTEXT_ENGINEERING.md](CONTEXT_ENGINEERING.md) — code-review notes
 - [frontend/README.md](frontend/README.md) — SPA-specific docs
 
@@ -492,6 +492,6 @@ cd frontend && npm run build     # Vite production build
 
 **เอกสารเพิ่มเติม:**
 
-- [ROADMAP.md](ROADMAP.md) — สถานะของแต่ละ phase (Phase 1 + 2 done, Phase 3 ใกล้เสร็จ)
+- [ROADMAP.md](ROADMAP.md) — สถานะของแต่ละ phase (Phase 1, 2, 3 ปิดครบ)
 - [CONTEXT_ENGINEERING.md](CONTEXT_ENGINEERING.md) — code-review notes
 - [frontend/README.md](frontend/README.md) — เอกสารเฉพาะของ SPA
